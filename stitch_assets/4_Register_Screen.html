@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Register - NBTS Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline-variant": "#e4beba",
+              "on-tertiary-container": "#e9f7ff",
+              "on-secondary-fixed": "#410003",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#8f6f6c",
+              "on-secondary": "#ffffff",
+              "surface-container-low": "#f6f3f2",
+              "primary-fixed-dim": "#ffb3ac",
+              "tertiary-container": "#00799c",
+              "secondary-fixed-dim": "#ffb3ac",
+              "secondary": "#9f3f39",
+              "tertiary": "#005f7b",
+              "inverse-surface": "#303030",
+              "surface-dim": "#dcd9d9",
+              "on-surface-variant": "#5b403d",
+              "background": "#fcf9f8",
+              "on-tertiary-fixed": "#001f2a",
+              "inverse-primary": "#ffb3ac",
+              "secondary-container": "#fd867d",
+              "on-error-container": "#93000a",
+              "on-surface": "#1b1c1c",
+              "surface-container-highest": "#e5e2e1",
+              "surface-variant": "#e5e2e1",
+              "on-background": "#1b1c1c",
+              "primary-container": "#d32f2f",
+              "on-tertiary": "#ffffff",
+              "error": "#ba1a1a",
+              "secondary-fixed": "#ffdad6",
+              "surface-container-high": "#eae7e7",
+              "on-secondary-fixed-variant": "#802824",
+              "on-primary-container": "#fff2f0",
+              "primary": "#af101a",
+              "on-error": "#ffffff",
+              "surface-tint": "#ba1a20",
+              "tertiary-fixed": "#bee9ff",
+              "on-secondary-container": "#741e1c",
+              "tertiary-fixed-dim": "#7bd1f8",
+              "inverse-on-surface": "#f3f0ef",
+              "primary-fixed": "#ffdad6",
+              "on-primary-fixed": "#410003",
+              "on-primary-fixed-variant": "#930010",
+              "surface": "#fcf9f8",
+              "on-tertiary-fixed-variant": "#004d65",
+              "surface-container": "#f0eded",
+              "error-container": "#ffdad6",
+              "surface-bright": "#fcf9f8",
+              "on-primary": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .vitality-gradient {
+        background: linear-gradient(135deg, #af101a 0%, #d32f2f 100%);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<nav class="bg-[#fcf9f8] dark:bg-stone-950 docked full-width top-0 z-50 shadow-[0_8px_32px_rgba(27,28,28,0.06)] flex justify-between items-center w-full px-6 h-16">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#af101a] dark:text-[#d32f2f]" data-icon="bloodtype">bloodtype</span>
+<span class="font-['Inter'] font-bold tracking-tight text-[#1b1c1c] dark:text-stone-100 text-xl font-black text-[#af101a] dark:text-[#d32f2f] tracking-tighter">NBTS Vitality</span>
+</div>
+<div class="flex gap-4">
+<button class="text-[#5b403d] dark:text-stone-400 hover:opacity-80 transition-opacity active:scale-95 duration-200 font-medium text-sm">Help</button>
+</div>
+</nav>
+<main class="flex-grow flex items-center justify-center px-6 py-12 md:py-20 overflow-hidden relative">
+<!-- Background Decorative Element -->
+<div class="absolute top-0 right-0 -mr-24 -mt-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="absolute bottom-0 left-0 -ml-24 -mb-24 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
+<div class="w-full max-w-[1200px] grid md:grid-cols-2 gap-12 items-center relative z-10">
+<!-- Branding/Editorial Column -->
+<div class="hidden md:flex flex-col space-y-8 pr-12">
+<div class="space-y-4">
+<span class="text-primary font-bold tracking-[0.2em] uppercase text-xs">Join the Community</span>
+<h1 class="text-on-surface font-bold text-display-md tracking-tighter leading-tight">
+                        Every drop <br/>tells a story of <br/><span class="text-primary italic">resilience.</span>
+</h1>
+</div>
+<div class="p-8 bg-surface-container-low rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-8xl" data-icon="favorite">favorite</span>
+</div>
+<p class="text-on-surface-variant font-medium text-lg leading-relaxed relative z-10">
+                        "Donating blood is the most fundamental act of human solidarity. It bridges the gap between tragedy and hope."
+                    </p>
+<div class="mt-6 flex items-center gap-4 relative z-10">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-fixed" data-icon="verified">verified</span>
+</div>
+<div>
+<p class="text-on-surface font-bold text-sm">Official NBTS Portal</p>
+<p class="text-on-surface-variant text-xs">Health &amp; Safety Verified</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Registration Form Column -->
+<div class="bg-surface-container-lowest p-8 md:p-12 rounded-xl shadow-[0_32px_64px_rgba(27,28,28,0.04)] border border-outline-variant/15 w-full max-w-md mx-auto">
+<header class="mb-10 text-center md:text-left">
+<h2 class="text-headline-sm font-bold tracking-tight text-on-surface mb-2">Create Account</h2>
+<p class="text-on-surface-variant text-sm">Enter your details to become a life-saver today.</p>
+</header>
+<form class="space-y-6">
+<!-- Name Field -->
+<div class="space-y-1.5">
+<label class="block text-[0.75rem] font-bold text-on-surface-variant uppercase tracking-[0.05em]" for="full_name">Full Name</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary" data-icon="person">person</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-on-surface-variant/40 transition-all outline-none" id="full_name" name="full_name" placeholder="E.g. Dr. Julian Sterling" required="" type="text"/>
+</div>
+<p class="text-[11px] text-on-surface-variant/60 px-1">Use the name as it appears on your government ID.</p>
+</div>
+<!-- Phone Field -->
+<div class="space-y-1.5">
+<label class="block text-[0.75rem] font-bold text-on-surface-variant uppercase tracking-[0.05em]" for="phone">Phone Number</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary" data-icon="call">call</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-on-surface-variant/40 transition-all outline-none" id="phone" name="phone" placeholder="+1 (555) 000-0000" required="" type="tel"/>
+</div>
+</div>
+<!-- Blood Group Dropdown -->
+<div class="space-y-1.5">
+<label class="block text-[0.75rem] font-bold text-on-surface-variant uppercase tracking-[0.05em]" for="blood_group">Blood Group</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary" data-icon="opacity">opacity</span>
+<select class="w-full pl-12 pr-10 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-on-surface appearance-none transition-all outline-none cursor-pointer" id="blood_group" name="blood_group">
+<option disabled="" selected="" value="">Select your type</option>
+<option value="A+">A Positive (A+)</option>
+<option value="A-">A Negative (A-)</option>
+<option value="B+">B Positive (B+)</option>
+<option value="B-">B Negative (B-)</option>
+<option value="AB+">AB Positive (AB+)</option>
+<option value="AB-">AB Negative (AB-)</option>
+<option value="O+">O Positive (O+)</option>
+<option value="O-">O Negative (O-)</option>
+<option value="unknown">I don't know</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Terms Checkbox -->
+<div class="flex items-start gap-3 py-2">
+<div class="flex items-center h-5">
+<input class="h-5 w-5 rounded-lg border-outline-variant text-primary focus:ring-primary/20 transition-all cursor-pointer" id="terms" name="terms" required="" type="checkbox"/>
+</div>
+<label class="text-xs text-on-surface-variant leading-tight" for="terms">
+                            I agree to the <a class="text-primary font-bold hover:underline" href="#">Privacy Policy</a> and authorize NBTS to store my medical data securely.
+                        </label>
+</div>
+<!-- Register Button -->
+<button class="w-full vitality-gradient text-white py-4 px-6 rounded-xl font-bold tracking-tight shadow-[0_8px_24px_rgba(175,16,26,0.25)] hover:opacity-90 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 group" type="submit">
+<span>Register Now</span>
+<span class="material-symbols-outlined transition-transform group-hover:translate-x-1" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<!-- Login Link -->
+<div class="text-center pt-4">
+<p class="text-on-surface-variant text-sm">
+                            Already a donor? 
+                            <a class="text-primary font-bold hover:underline ml-1" href="#">Log in here</a>
+</p>
+</div>
+</form>
+</div>
+</div>
+</main>
+<!-- Footer Meta -->
+<footer class="p-8 text-center bg-surface-container-low/30">
+<div class="flex flex-col md:flex-row justify-center items-center gap-6 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="security">security</span>
+<span class="text-[10px] uppercase font-bold tracking-[0.1em]">Encrypted Connection</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="health_and_safety">health_and_safety</span>
+<span class="text-[10px] uppercase font-bold tracking-[0.1em]">Medical Standard ISO-9001</span>
+</div>
+</div>
+</footer>
+</body></html>

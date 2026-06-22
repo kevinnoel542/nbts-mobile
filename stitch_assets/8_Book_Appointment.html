@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Schedule Donation - NBTS Vitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-variant": "#e5e2e1",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#9f3f39",
+                        "outline": "#8f6f6c",
+                        "on-tertiary-container": "#e9f7ff",
+                        "on-tertiary-fixed": "#001f2a",
+                        "on-background": "#1b1c1c",
+                        "on-primary-fixed-variant": "#930010",
+                        "secondary-fixed": "#ffdad6",
+                        "tertiary-fixed": "#bee9ff",
+                        "on-secondary-fixed-variant": "#802824",
+                        "primary-fixed": "#ffdad6",
+                        "surface": "#fcf9f8",
+                        "surface-container-high": "#eae7e7",
+                        "inverse-primary": "#ffb3ac",
+                        "background": "#fcf9f8",
+                        "tertiary": "#005f7b",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#ffb3ac",
+                        "on-surface": "#1b1c1c",
+                        "secondary-container": "#fd867d",
+                        "inverse-surface": "#303030",
+                        "tertiary-fixed-dim": "#7bd1f8",
+                        "surface-tint": "#ba1a20",
+                        "primary-fixed-dim": "#ffb3ac",
+                        "primary": "#af101a",
+                        "on-secondary-container": "#741e1c",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#fff2f0",
+                        "on-secondary-fixed": "#410003",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#fcf9f8",
+                        "surface-container": "#f0eded",
+                        "on-primary-fixed": "#410003",
+                        "primary-container": "#d32f2f",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#5b403d",
+                        "outline-variant": "#e4beba",
+                        "surface-container-highest": "#e5e2e1",
+                        "surface-container-low": "#f6f3f2",
+                        "on-tertiary-fixed-variant": "#004d65",
+                        "surface-dim": "#dcd9d9",
+                        "tertiary-container": "#00799c"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar Component -->
+<header class="fixed top-0 z-50 w-full flex justify-between items-center px-6 h-16 bg-[#fcf9f8] shadow-[0_8px_32px_rgba(27,28,28,0.06)]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#af101a] text-2xl" data-icon="bloodtype">bloodtype</span>
+<h1 class="font-headline font-bold tracking-tight text-[#1b1c1c] text-xl">NBTS Vitality</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="Portrait of a male blood donor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhN3DiOVriR9ZLXbhB-k7bSL8sCQOqkW6bANC_LNAeC68waQuVs9u6IBDN668aCG15MrN3EcwIHsErIE5lVN-OQJknOFGQlu4zKYiWApeJE3FrHGbBjiQcFPGH4_6X_ShdDg7k_2mOVLr4QLcVLmdr0Lj5r8RPA0bTgNuirO60nZmvoRpo27SUkL9ij7pbibnQ4-9OK39fpZ2I5FJNr9J7QdEj-YVI_x_lw8VKRoz6UTBKuvU1b-5OX82HPZ_mjIcsc0FehspSqBUs"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-2xl mx-auto">
+<!-- Editorial Hero Section -->
+<section class="mb-12">
+<h2 class="text-[2.75rem] font-black leading-none tracking-tighter text-on-surface mb-2">Schedule Your<br/><span class="text-primary">Life-Saving</span> Moment.</h2>
+<p class="text-on-surface-variant font-medium max-w-sm">Every donation can save up to three lives. Select a convenient time and location.</p>
+</section>
+<!-- Booking Flow Container -->
+<div class="space-y-12">
+<!-- Step 1: Center Selection -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-[0.75rem] font-bold uppercase tracking-[0.1em] text-on-surface-variant">Step 01</span>
+<span class="h-px flex-1 bg-outline-variant/15 ml-4"></span>
+</div>
+<h3 class="text-xl font-bold text-on-surface">Select Donation Center</h3>
+<div class="relative group">
+<div class="flex items-center gap-4 p-5 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-all border border-transparent active:scale-[0.98]">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<div class="flex-1">
+<p class="text-sm font-bold">Central Regional Blood Bank</p>
+<p class="text-[0.75rem] text-on-surface-variant">124 Medical Plaza, Downtown Metro</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</section>
+<!-- Step 2: Date Picker (Bento Style) -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-[0.75rem] font-bold uppercase tracking-[0.1em] text-on-surface-variant">Step 02</span>
+<span class="h-px flex-1 bg-outline-variant/15 ml-4"></span>
+</div>
+<div class="flex justify-between items-end">
+<h3 class="text-xl font-bold text-on-surface">Choose a Date</h3>
+<p class="text-[0.75rem] font-semibold text-primary">October 2023</p>
+</div>
+<div class="grid grid-cols-7 gap-2">
+<!-- Day Labels -->
+<div class="text-center text-[10px] font-bold text-on-surface-variant opacity-50 py-1">MON</div>
+<div class="text-center text-[10px] font-bold text-on-surface-variant opacity-50 py-1">TUE</div>
+<div class="text-center text-[10px] font-bold text-on-surface-variant opacity-50 py-1">WED</div>
+<div class="text-center text-[10px] font-bold text-on-surface-variant opacity-50 py-1">THU</div>
+<div class="text-center text-[10px] font-bold text-on-surface-variant opacity-50 py-1">FRI</div>
+<div class="text-center text-[10px] font-bold text-on-surface-variant opacity-50 py-1">SAT</div>
+<div class="text-center text-[10px] font-bold text-on-surface-variant opacity-50 py-1">SUN</div>
+<!-- Dates Grid (Simplified Representative) -->
+<button class="aspect-square flex items-center justify-center text-sm font-medium rounded-xl hover:bg-surface-container-low opacity-30 cursor-not-allowed">12</button>
+<button class="aspect-square flex items-center justify-center text-sm font-medium rounded-xl hover:bg-surface-container-low opacity-30 cursor-not-allowed">13</button>
+<button class="aspect-square flex items-center justify-center text-sm font-medium rounded-xl hover:bg-surface-container-low">14</button>
+<button class="aspect-square flex items-center justify-center text-sm font-bold rounded-xl bg-primary text-on-primary shadow-lg shadow-primary/20 scale-105">15</button>
+<button class="aspect-square flex items-center justify-center text-sm font-medium rounded-xl hover:bg-surface-container-low">16</button>
+<button class="aspect-square flex items-center justify-center text-sm font-medium rounded-xl hover:bg-surface-container-low">17</button>
+<button class="aspect-square flex items-center justify-center text-sm font-medium rounded-xl hover:bg-surface-container-low">18</button>
+</div>
+</section>
+<!-- Step 3: Time Slot Selection (Pills) -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-[0.75rem] font-bold uppercase tracking-[0.1em] text-on-surface-variant">Step 03</span>
+<span class="h-px flex-1 bg-outline-variant/15 ml-4"></span>
+</div>
+<h3 class="text-xl font-bold text-on-surface">Available Slots</h3>
+<div class="grid grid-cols-3 gap-3">
+<button class="py-4 px-2 rounded-xl border border-outline-variant/20 bg-surface flex flex-col items-center justify-center gap-1 hover:border-primary transition-colors">
+<span class="text-sm font-bold">09:00 AM</span>
+<span class="text-[10px] font-medium text-on-surface-variant">MORNING</span>
+</button>
+<button class="py-4 px-2 rounded-xl border-2 border-primary bg-primary/5 flex flex-col items-center justify-center gap-1">
+<span class="text-sm font-bold text-primary">11:30 AM</span>
+<span class="text-[10px] font-medium text-primary">MORNING</span>
+</button>
+<button class="py-4 px-2 rounded-xl border border-outline-variant/20 bg-surface flex flex-col items-center justify-center gap-1 hover:border-primary transition-colors">
+<span class="text-sm font-bold">01:45 PM</span>
+<span class="text-[10px] font-medium text-on-surface-variant">AFTERNOON</span>
+</button>
+<button class="py-4 px-2 rounded-xl border border-outline-variant/20 bg-surface flex flex-col items-center justify-center gap-1 hover:border-primary transition-colors">
+<span class="text-sm font-bold">03:00 PM</span>
+<span class="text-[10px] font-medium text-on-surface-variant">AFTERNOON</span>
+</button>
+<button class="py-4 px-2 rounded-xl border border-outline-variant/20 bg-surface-container-low opacity-40 cursor-not-allowed flex flex-col items-center justify-center gap-1">
+<span class="text-sm font-bold line-through">04:30 PM</span>
+<span class="text-[10px] font-medium">BOOKED</span>
+</button>
+<button class="py-4 px-2 rounded-xl border border-outline-variant/20 bg-surface flex flex-col items-center justify-center gap-1 hover:border-primary transition-colors">
+<span class="text-sm font-bold">05:45 PM</span>
+<span class="text-[10px] font-medium text-on-surface-variant">EVENING</span>
+</button>
+</div>
+</section>
+<!-- Important Info (Editorial Card) -->
+<section class="bg-surface-container-high rounded-xl p-6 flex gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Preparation Tip</h4>
+<p class="text-sm text-on-surface-variant">Please ensure you have a healthy meal and stay hydrated at least 2 hours before your scheduled appointment.</p>
+</div>
+</section>
+<!-- Final Action -->
+<section class="pt-6">
+<button class="w-full h-16 bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold text-lg rounded-xl shadow-[0_8px_32px_rgba(175,16,26,0.25)] active:scale-95 transition-transform flex items-center justify-center gap-3">
+                    Confirm Appointment
+                    <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<p class="text-center mt-4 text-[0.75rem] font-medium text-on-surface-variant">By confirming, you agree to our donation guidelines and privacy policy.</p>
+</section>
+</div>
+</main>
+<!-- BottomNavBar Component -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 bg-[#fcf9f8]/80 backdrop-blur-lg shadow-[0_-4px_24px_rgba(27,28,28,0.04)] border-t border-[#e4beba]/15">
+<a class="flex flex-col items-center justify-center text-[#5b403d] py-1 px-3 hover:text-[#af101a] transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="text-[10px] font-medium uppercase tracking-[0.05em] mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#af101a] bg-[#eae7e7] rounded-xl py-1 px-3" href="#">
+<span class="material-symbols-outlined" data-icon="water_drop" style="font-variation-settings: 'FILL' 1;">water_drop</span>
+<span class="text-[10px] font-medium uppercase tracking-[0.05em] mt-1">Donate</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#5b403d] py-1 px-3 hover:text-[#af101a] transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="text-[10px] font-medium uppercase tracking-[0.05em] mt-1">History</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#5b403d] py-1 px-3 hover:text-[#af101a] transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] font-medium uppercase tracking-[0.05em] mt-1">Profile</span>
+</a>
+</nav>
+<!-- Mobile Navigation Shell Spacer -->
+<div class="h-20 w-full"></div>
+</body></html>

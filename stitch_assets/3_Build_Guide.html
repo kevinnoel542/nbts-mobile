@@ -1,0 +1,49 @@
+# NBTS BLOOD DONOR APP — FULL BUILD GUIDE
+
+## PHASE 1 — PROJECT FOUNDATION
+- Project Setup: `flutter create nbts_donor_app`
+- Clean Architecture Structure: `lib/core/`, `lib/features/`, `lib/shared/`
+
+## PHASE 2 — DESIGN SYSTEM
+- Colors (Medical Theme):
+  - Primary: `#D32F2F`
+  - Background: `Colors.white`
+  - Text Dark: `Colors.black87`
+  - Grey: `Colors.grey`
+- Typography: 'Inter'
+
+## PHASE 3 — AUTHENTICATION
+- Register Screen
+- Login Screen
+- Phone OTP Verification (Firebase Auth)
+
+## PHASE 4 — DONOR SYSTEM
+- Donor Model (id, fullName, phone, bloodGroup, lastDonationDate)
+- Firestore integration for saving donor data
+
+## PHASE 5 — DASHBOARD
+- Welcome message
+- Next eligible date
+- Total donations
+- Quick actions: Book donation, View history, Find centers
+
+## PHASE 6 — APPOINTMENT SYSTEM
+- Select center, Select date, Book appointment
+
+## PHASE 7 — DONATION CENTERS
+- List of centers, Map view (Google Maps API)
+
+## PHASE 8 — NOTIFICATIONS
+- Donation reminders, Eligibility alerts (Firebase Cloud Messaging)
+
+## PHASE 9 — DONATION HISTORY
+- List view from Firestore (Date, Location, Units)
+
+## PHASE 10 — DIGITAL DONOR CARD
+- Name, Blood group, Donor ID, QR code
+
+## PHASE 11 — ELIGIBILITY LOGIC
+- Male: 90 days, Female: 120 days
+
+## PHASE 12 — ADMIN
+- Web dashboard for managing donors and appointments.
