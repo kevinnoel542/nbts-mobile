@@ -1,12 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:nbts/core/data/app_data.dart';
+import 'package:flutter/services.dart';
+import 'package:nbts/core/api/api_client.dart';
+import 'package:nbts/core/api/service_locator.dart';
+import 'package:nbts/core/data/models/donor_card.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
 import 'package:nbts/core/widgets/app_card.dart';
+import 'package:nbts/core/widgets/empty_state.dart';
 import 'package:nbts/core/widgets/info_row.dart';
 import 'package:nbts/core/widgets/status_pill.dart';
 
-class DonorCardScreen extends StatelessWidget {
+class DonorCardScreen extends StatefulWidget {
   const DonorCardScreen({super.key});
+
+  @override
+  State<DonorCardScreen> createState() => _DonorCardScreenState();
+}
+
+class _DonorCardScreenState extends State<DonorCardScreen> {
+  late Future<DonorCard> _cardFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _cardFuture = Services.instance.donorCard.fetch();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _cardFuture = Services.instance.donorCard.fetch();
+    });
+    await _cardFuture;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,54 +42,114 @@ class DonorCardScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
-            onPressed: () {},
+            onPressed: () async {
+              final card = await _cardFuture;
+              if (!context.mounted) return;
+              final text = '''
+NBTS Donor Card
+Name: ${card.name ?? 'Pending'}
+Donor ID: ${card.donorId}
+Blood group: ${card.bloodGroup ?? 'Pending'}
+''';
+              await Clipboard.setData(ClipboardData(text: text.trim()));
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Donor card details copied.')),
+              );
+            },
           ),
           const SizedBox(width: 4),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.sm,
-          AppSpacing.lg,
-          AppSpacing.xl,
-        ),
-        children: [
-          _IdentityCard(scheme: scheme),
-          const SizedBox(height: AppSpacing.lg),
-          _QrPanel(scheme: scheme),
-          const SizedBox(height: AppSpacing.lg),
-          AppCard(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              children: const [
-                InfoRow(
-                  icon: Icons.event_available_outlined,
-                  label: 'Next eligible',
-                  value: AppData.nextEligibleDate,
-                ),
-                SizedBox(height: AppSpacing.md),
-                InfoRow(
-                  icon: Icons.place_outlined,
-                  label: 'Home center',
-                  value: AppData.preferredCenter,
+      body: FutureBuilder<DonorCard>(
+        future: _cardFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            final message = snapshot.error is ApiException
+                ? (snapshot.error as ApiException).message
+                : 'Could not load your donor card.';
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                children: [
+                  EmptyState(
+                    icon: Icons.badge_outlined,
+                    title: 'Donor card unavailable',
+                    message: message,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final card = snapshot.data!;
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.xl,
+              ),
+              children: [
+                _IdentityCard(scheme: scheme, card: card),
+                const SizedBox(height: AppSpacing.lg),
+                _QrPanel(scheme: scheme, card: card),
+                const SizedBox(height: AppSpacing.lg),
+                AppCard(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    children: [
+                      InfoRow(
+                        icon: Icons.event_available_outlined,
+                        label: 'Next eligible',
+                        value: _formatDate(card.nextEligibleDate) ??
+                            'Pending medical verification',
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      InfoRow(
+                        icon: Icons.place_outlined,
+                        label: 'Home center',
+                        value: _text(
+                          card.preferredCenter,
+                          fallback: 'No center selected',
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      InfoRow(
+                        icon: Icons.update_rounded,
+                        label: 'QR expires',
+                        value: _formatDateTime(card.qrExpiresAt) ??
+                            'Refresh daily',
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
 class _IdentityCard extends StatelessWidget {
-  const _IdentityCard({required this.scheme});
+  const _IdentityCard({required this.scheme, required this.card});
 
   final ColorScheme scheme;
+  final DonorCard card;
 
   @override
   Widget build(BuildContext context) {
+    final verified = card.bloodGroupVerified == true;
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -89,16 +173,16 @@ class _IdentityCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const StatusPill(
-                label: 'Verified',
-                icon: Icons.verified_outlined,
-                kind: StatusKind.success,
+              StatusPill(
+                label: verified ? 'Verified' : 'Unverified',
+                icon: verified ? Icons.verified_outlined : Icons.pending_outlined,
+                kind: verified ? StatusKind.success : StatusKind.warning,
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            AppData.donorName,
+            _text(card.name, fallback: 'Donor profile pending'),
             style: TextStyle(
               color: scheme.onSurface,
               fontSize: 22,
@@ -108,7 +192,7 @@ class _IdentityCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            AppData.donorId,
+            card.donorId,
             style: TextStyle(
               color: scheme.onSurfaceVariant,
               fontSize: 13,
@@ -121,19 +205,19 @@ class _IdentityCard extends StatelessWidget {
             children: [
               _MiniField(
                 label: 'Blood',
-                value: AppData.bloodType,
+                value: _text(card.bloodGroup, fallback: 'Pending'),
                 scheme: scheme,
               ),
               const SizedBox(width: AppSpacing.lg),
               _MiniField(
                 label: 'Donations',
-                value: '${AppData.totalDonations}',
+                value: '${card.totalDonations ?? 0}',
                 scheme: scheme,
               ),
               const SizedBox(width: AppSpacing.lg),
               _MiniField(
                 label: 'Tier',
-                value: AppData.loyaltyTier,
+                value: _text(card.loyaltyTier, fallback: 'Pending'),
                 scheme: scheme,
               ),
             ],
@@ -184,9 +268,10 @@ class _MiniField extends StatelessWidget {
 }
 
 class _QrPanel extends StatelessWidget {
-  const _QrPanel({required this.scheme});
+  const _QrPanel({required this.scheme, required this.card});
 
   final ColorScheme scheme;
+  final DonorCard card;
 
   @override
   Widget build(BuildContext context) {
@@ -227,10 +312,14 @@ class _QrPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Refreshes every 24 hours',
+            card.qrPayloadText,
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: scheme.onSurfaceVariant,
-              fontSize: 12,
+              fontSize: 11,
+              fontFamily: 'monospace',
             ),
           ),
         ],
@@ -238,3 +327,25 @@ class _QrPanel extends StatelessWidget {
     );
   }
 }
+
+String _text(String? value, {required String fallback}) {
+  if (value == null || value.trim().isEmpty) return fallback;
+  return value;
+}
+
+String? _formatDate(DateTime? date) {
+  if (date == null) return null;
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  return '${months[date.month - 1]} ${date.day}, ${date.year}';
+}
+
+String? _formatDateTime(DateTime? date) {
+  if (date == null) return null;
+  final hh = date.hour.toString().padLeft(2, '0');
+  final mm = date.minute.toString().padLeft(2, '0');
+  return '${_formatDate(date)}  $hh:$mm';
+}
+

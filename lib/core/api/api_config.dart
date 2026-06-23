@@ -3,7 +3,7 @@ class ApiConfig {
 
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.0.130/api/v1',
+    defaultValue: 'http://192.168.0.130:8003/api/v1',
   );
 
   static Uri endpoint(String path, [Map<String, dynamic>? queryParameters]) {
@@ -22,4 +22,5 @@ class ApiConfig {
     );
   }
 }
+
 

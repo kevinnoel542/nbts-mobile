@@ -19,7 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
 
   static const _bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-  static const _genders = ['male', 'female', 'other'];
+  static const _genders = ['Male', 'Female', 'Other'];
   static const _regions = [
     'Arusha', 'Dar es Salaam', 'Dodoma', 'Geita', 'Iringa', 'Kagera',
     'Katavi', 'Kigoma', 'Kilimanjaro', 'Lindi', 'Manyara', 'Mara', 'Mbeya',
@@ -242,7 +242,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 items: _genders
                     .map((g) => DropdownMenuItem(
                           value: g,
-                          child: Text(g[0].toUpperCase() + g.substring(1)),
+                          child: Text(g),
                         ))
                     .toList(),
                 onChanged:
@@ -416,5 +416,6 @@ class _Field extends StatelessWidget {
     );
   }
 }
+
 
 

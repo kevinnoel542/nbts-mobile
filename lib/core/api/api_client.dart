@@ -127,7 +127,25 @@ class ApiClient {
 
   dynamic _decode(http.Response response) {
     final body = response.body;
-    final decoded = body.isEmpty ? null : jsonDecode(body);
+    Object? decoded;
+
+    if (body.isNotEmpty) {
+      try {
+        decoded = jsonDecode(body);
+      } on FormatException {
+        final preview = body
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+        final message = preview.isEmpty
+            ? 'Server returned ${response.statusCode} with an invalid response.'
+            : 'Server returned ${response.statusCode}: ${preview.length > 160 ? preview.substring(0, 160) : preview}';
+        throw ApiException(
+          message,
+          statusCode: response.statusCode,
+          body: body,
+        );
+      }
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return decoded;
@@ -158,3 +176,4 @@ class ApiClient {
     );
   }
 }
+

@@ -36,6 +36,8 @@ class User {
   final DateTime? nextEligibleDate;
 
   factory User.fromJson(Map<String, dynamic> json) {
+    final donorProfile = readObject(json, 'donor_profile');
+    final profile = readObject(json, 'profile') ?? donorProfile;
     return User(
       id: readInt(json, ['id', 'user_id']) ?? 0,
       name: readString(json, ['name', 'full_name', 'display_name']) ?? '',
@@ -45,7 +47,8 @@ class User {
       gender: readString(json, ['gender', 'sex']),
       region: readString(json, ['region', 'location', 'city']),
       dateOfBirth: readDate(json, ['date_of_birth', 'dob', 'birth_date']),
-      donorId: readString(json, ['donor_id', 'donorId', 'nbts_id']),
+      donorId: readString(json, ['donor_id', 'donorId', 'nbts_id']) ??
+          readString(profile, ['donor_id', 'donorId', 'nbts_id']),
       preferredCenter: readString(
         json,
         ['preferred_center', 'preferred_center_name', 'center'],
@@ -53,17 +56,23 @@ class User {
       loyaltyTier: readString(json, ['loyalty_tier', 'tier']),
       loyaltyPoints: readInt(json, ['loyalty_points', 'points']),
       totalDonations: readInt(
-        json,
-        ['total_donations', 'donations_count', 'donation_count'],
-      ),
+            json,
+            ['total_donations', 'donations_count', 'donation_count'],
+          ) ??
+          readInt(profile, ['total_donations', 'donations_count']),
       totalVolumeMl: readInt(
         json,
         ['total_volume_ml', 'total_volume', 'volume_ml'],
       ),
       nextEligibleDate: readDate(
-        json,
-        ['next_eligible_date', 'next_eligible_at', 'eligible_date'],
-      ),
+            json,
+            ['next_eligible_date', 'next_eligible_at', 'eligible_date'],
+          ) ??
+          readDate(profile, [
+            'next_eligible_donation_date',
+            'next_eligible_date',
+            'eligible_date',
+          ]),
     );
   }
 }

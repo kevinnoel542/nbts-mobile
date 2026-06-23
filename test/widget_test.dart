@@ -1,12 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/main.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   Future<void> pumpWelcome(WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
-    await Services.instance.init();
     await tester.pumpWidget(const NBTSApp());
     await tester.pump(const Duration(seconds: 3));
     await tester.pump();
@@ -33,3 +29,4 @@ void main() {
     expect(find.text('Create account'), findsOneWidget);
   });
 }
+

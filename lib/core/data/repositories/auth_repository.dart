@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/token_store.dart';
@@ -5,12 +7,17 @@ import 'package:nbts/core/data/models/json_utils.dart';
 import 'package:nbts/core/data/models/user.dart';
 
 class AuthRepository extends ChangeNotifier {
-  AuthRepository({required ApiClient api, required TokenStore tokens})
-      : _api = api,
-        _tokens = tokens;
+  AuthRepository({
+    required ApiClient api,
+    required TokenStore tokens,
+    Future<void> Function()? onAuthenticated,
+  })  : _api = api,
+        _tokens = tokens,
+        _onAuthenticated = onAuthenticated;
 
   final ApiClient _api;
   final TokenStore _tokens;
+  final Future<void> Function()? _onAuthenticated;
 
   User? _user;
   User? get user => _user;
@@ -72,7 +79,7 @@ class AuthRepository extends ChangeNotifier {
     try {
       await _api.post('/auth/logout');
     } on ApiException {
-      // Best effort — clear the local session even if logout fails server-side.
+      // Best effort: clear the local session even if logout fails server-side.
     }
     await _tokens.clear();
     _user = null;
@@ -100,11 +107,25 @@ class AuthRepository extends ChangeNotifier {
     } else if (rawUser is Map) {
       userJson = rawUser.cast<String, dynamic>();
     }
+
+    final wrappedUser = userJson?['data'];
+    if (wrappedUser is Map<String, dynamic>) {
+      userJson = wrappedUser;
+    } else if (wrappedUser is Map) {
+      userJson = wrappedUser.cast<String, dynamic>();
+    }
+
     final user = userJson != null ? User.fromJson(userJson) : null;
 
     await _tokens.save(token, userId: user?.id);
     _user = user;
     notifyListeners();
+    final onAuthenticated = _onAuthenticated;
+    if (onAuthenticated != null) {
+      unawaited(onAuthenticated());
+    }
     return user ?? await fetchCurrentUser();
   }
 }
+
+

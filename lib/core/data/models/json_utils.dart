@@ -1,4 +1,5 @@
-String? readString(Map<String, dynamic> json, List<String> keys) {
+String? readString(Map<String, dynamic>? json, List<String> keys) {
+  if (json == null) return null;
   for (final k in keys) {
     final v = json[k];
     if (v == null) continue;
@@ -8,7 +9,8 @@ String? readString(Map<String, dynamic> json, List<String> keys) {
   return null;
 }
 
-int? readInt(Map<String, dynamic> json, List<String> keys) {
+int? readInt(Map<String, dynamic>? json, List<String> keys) {
+  if (json == null) return null;
   for (final k in keys) {
     final v = json[k];
     if (v == null) continue;
@@ -22,7 +24,8 @@ int? readInt(Map<String, dynamic> json, List<String> keys) {
   return null;
 }
 
-double? readDouble(Map<String, dynamic> json, List<String> keys) {
+double? readDouble(Map<String, dynamic>? json, List<String> keys) {
+  if (json == null) return null;
   for (final k in keys) {
     final v = json[k];
     if (v == null) continue;
@@ -35,7 +38,8 @@ double? readDouble(Map<String, dynamic> json, List<String> keys) {
   return null;
 }
 
-bool? readBool(Map<String, dynamic> json, List<String> keys) {
+bool? readBool(Map<String, dynamic>? json, List<String> keys) {
+  if (json == null) return null;
   for (final k in keys) {
     final v = json[k];
     if (v == null) continue;
@@ -50,7 +54,8 @@ bool? readBool(Map<String, dynamic> json, List<String> keys) {
   return null;
 }
 
-DateTime? readDate(Map<String, dynamic> json, List<String> keys) {
+DateTime? readDate(Map<String, dynamic>? json, List<String> keys) {
+  if (json == null) return null;
   for (final k in keys) {
     final v = json[k];
     if (v == null) continue;
@@ -63,7 +68,8 @@ DateTime? readDate(Map<String, dynamic> json, List<String> keys) {
   return null;
 }
 
-List<String> readStringList(Map<String, dynamic> json, List<String> keys) {
+List<String> readStringList(Map<String, dynamic>? json, List<String> keys) {
+  if (json == null) return const [];
   for (final k in keys) {
     final v = json[k];
     if (v is List) {
@@ -97,5 +103,13 @@ Map<String, dynamic>? readObjectPayload(dynamic payload) {
     if (data is Map<String, dynamic>) return data;
     return payload;
   }
+  return null;
+}
+
+Map<String, dynamic>? readObject(Map<String, dynamic>? json, String key) {
+  if (json == null) return null;
+  final value = json[key];
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return value.cast<String, dynamic>();
   return null;
 }

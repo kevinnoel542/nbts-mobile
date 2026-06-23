@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "856326606374",
+    "project_id": "nbts-d567e",
+    "storage_bucket": "nbts-d567e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:856326606374:android:d6269ff16b224b12b0a0e7",
+        "android_client_info": {
+          "package_name": "com.nbts.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkFnqW__09Ah4Ln_8Mx-rbJ6BKf6k5HoI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

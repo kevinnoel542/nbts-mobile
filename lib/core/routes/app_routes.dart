@@ -7,6 +7,7 @@ import 'package:nbts/features/dashboard/screens/main_layout.dart';
 import 'package:nbts/features/donate/screens/book_appointment_screen.dart';
 import 'package:nbts/features/donate/screens/find_centers_screen.dart';
 import 'package:nbts/features/history/screens/history_screen.dart';
+import 'package:nbts/features/notifications/screens/notifications_screen.dart';
 import 'package:nbts/features/profile/screens/profile_screen.dart';
 
 class AppRoutes {
@@ -20,6 +21,7 @@ class AppRoutes {
   static const String centers = '/centers';
   static const String history = '/history';
   static const String profile = '/profile';
+  static const String notifications = '/notifications';
 
   static Map<String, WidgetBuilder> get routes => {
     welcome: (context) => const WelcomeScreen(),
@@ -31,5 +33,7 @@ class AppRoutes {
     centers: (context) => const FindCentersScreen(),
     history: (context) => const HistoryScreen(),
     profile: (context) => const ProfileScreen(),
+    notifications: (context) => const NotificationsScreen(),
   };
 }
+

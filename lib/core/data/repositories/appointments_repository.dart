@@ -27,6 +27,33 @@ class AppointmentsRepository {
     }
   }
 
+
+  Future<Appointment> reschedule({
+    required int appointmentId,
+    required int centerId,
+    required DateTime scheduledAt,
+    String? notes,
+  }) async {
+    final response = await _api.put('/appointments/$appointmentId', body: {
+      'blood_center_id': centerId,
+      'scheduled_at': scheduledAt.toIso8601String(),
+      if (notes != null && notes.isNotEmpty) 'notes': notes,
+    });
+    final payload = readObjectPayload(response);
+    if (payload == null) {
+      throw const ApiException('Unexpected appointment response');
+    }
+    return Appointment.fromJson(payload);
+  }
+
+  Future<Appointment> cancel(int appointmentId) async {
+    final response = await _api.post('/appointments/$appointmentId/cancel');
+    final payload = readObjectPayload(response);
+    if (payload == null) {
+      throw const ApiException('Unexpected appointment response');
+    }
+    return Appointment.fromJson(payload);
+  }
   Future<Appointment> book({
     required int centerId,
     required DateTime scheduledAt,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
+import 'package:nbts/core/data/models/appointment.dart';
 import 'package:nbts/core/data/models/donation_center.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
 import 'package:nbts/core/widgets/app_card.dart';
@@ -26,6 +27,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   DonationCenter? _selectedCenter;
   DateTime? _selectedDate;
   int? _selectedSlot;
+  Appointment? _rescheduleAppointment;
   bool _readArgs = false;
   bool _submitting = false;
   String? _formError;
@@ -44,6 +46,25 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is DonationCenter) {
       _selectedCenter = args;
+    } else if (args is Appointment) {
+      _rescheduleAppointment = args;
+      if (args.centerId != null) {
+        _selectedCenter = DonationCenter(
+          id: args.centerId!,
+          name: args.centerName ?? 'Selected center',
+        );
+      }
+      final scheduledAt = args.scheduledAt;
+      if (scheduledAt != null) {
+        _selectedDate = DateTime(
+          scheduledAt.year,
+          scheduledAt.month,
+          scheduledAt.day,
+        );
+        final slotIndex = _slots.indexWhere((slot) =>
+            slot.hour == scheduledAt.hour && slot.minute == scheduledAt.minute);
+        if (slotIndex >= 0) _selectedSlot = slotIndex;
+      }
     }
     _readArgs = true;
   }
@@ -79,13 +100,24 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     });
 
     try {
-      await Services.instance.appointments.book(
-        centerId: center.id,
-        scheduledAt: scheduledAt,
-      );
+      final reschedule = _rescheduleAppointment;
+      if (reschedule == null) {
+        await Services.instance.appointments.book(
+          centerId: center.id,
+          scheduledAt: scheduledAt,
+        );
+      } else {
+        await Services.instance.appointments.reschedule(
+          appointmentId: reschedule.id,
+          centerId: center.id,
+          scheduledAt: scheduledAt,
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Appointment booked.')),
+        SnackBar(content: Text(_rescheduleAppointment == null
+            ? 'Appointment booked.'
+            : 'Appointment rescheduled.')),
       );
       Navigator.pop(context, true);
     } on ApiException catch (e) {
@@ -93,7 +125,9 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       setState(() => _formError = e.firstError());
     } catch (_) {
       if (!mounted) return;
-      setState(() => _formError = 'Could not book appointment.');
+      setState(() => _formError = _rescheduleAppointment == null
+          ? 'Could not book appointment.'
+          : 'Could not reschedule appointment.');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -108,7 +142,11 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
         !_submitting;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Book donation')),
+      appBar: AppBar(
+        title: Text(_rescheduleAppointment == null
+            ? 'Book donation'
+            : 'Reschedule donation'),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,
@@ -201,7 +239,9 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2.4),
                   )
-                : const Text('Confirm appointment'),
+                : Text(_rescheduleAppointment == null
+                    ? 'Confirm appointment'
+                    : 'Save appointment'),
           ),
         ],
       ),

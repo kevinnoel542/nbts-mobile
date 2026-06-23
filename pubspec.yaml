@@ -1,5 +1,5 @@
 name: nbts
-description: "A new Flutter project."
+description: "NBTS donor mobile app for registration, appointments, and donation history."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -36,7 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^8.0.2
   http: ^1.6.0
-  shared_preferences: ^2.5.5
+  firebase_core: ^4.2.1
+  firebase_messaging: ^16.0.4
 
 dev_dependencies:
   flutter_test:
@@ -117,3 +118,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+
+
+

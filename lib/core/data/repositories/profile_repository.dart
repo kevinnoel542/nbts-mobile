@@ -14,4 +14,13 @@ class ProfileRepository {
     }
     return User.fromJson(payload);
   }
+
+  Future<User> update(Map<String, dynamic> body) async {
+    final response = await _api.put('/profile', body: body);
+    final payload = readObjectPayload(response);
+    if (payload == null) {
+      throw const ApiException('Unexpected profile payload');
+    }
+    return User.fromJson(payload);
+  }
 }

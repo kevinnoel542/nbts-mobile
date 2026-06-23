@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:nbts/core/data/app_data.dart';
+import 'package:nbts/core/api/api_client.dart';
+import 'package:nbts/core/api/service_locator.dart';
+import 'package:nbts/core/data/models/user.dart';
 import 'package:nbts/core/routes/app_routes.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
 import 'package:nbts/core/theme/theme_controller.dart';
 import 'package:nbts/core/widgets/app_card.dart';
+import 'package:nbts/core/widgets/empty_state.dart';
 import 'package:nbts/core/widgets/section_header.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -18,6 +21,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _sms = true;
   bool _shareAnon = false;
   String _language = 'English';
+  late Future<User> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = Services.instance.profile.fetch();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _profileFuture = Services.instance.profile.fetch();
+    });
+    await _profileFuture;
+  }
+
+  Future<void> _signOut() async {
+    await Services.instance.auth.logout();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.welcome, (_) => false);
+  }
+
+  Future<void> _updatePreference(String key, bool value) async {
+    try {
+      await Services.instance.profile.update({key: value});
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Preference updated.')),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.firstError())),
+      );
+    }
+  }
+
+  void _showInfoSheet({
+    required String title,
+    required IconData icon,
+    required String message,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.xl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(message),
+            const SizedBox(height: AppSpacing.lg),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton(
+                onPressed: onAction ?? () => Navigator.pop(context),
+                child: Text(actionLabel ?? 'Done'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,159 +113,235 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () {},
+            onPressed: () => _showInfoSheet(
+              title: 'Edit profile',
+              icon: Icons.edit_outlined,
+              message: 'Use the account rows below to review your donor card, medical summary, emergency contact, and preferences.',
+            ),
           ),
           const SizedBox(width: 4),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.sm,
-          AppSpacing.lg,
-          AppSpacing.xl,
-        ),
-        children: [
-          _Header(scheme: scheme),
-          const SizedBox(height: AppSpacing.xl),
-          const SectionHeader('Account'),
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
+      body: FutureBuilder<User>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            final message = snapshot.error is ApiException
+                ? (snapshot.error as ApiException).message
+                : 'Could not load your profile.';
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                children: [
+                  EmptyState(
+                    icon: Icons.person_off_outlined,
+                    title: 'Profile unavailable',
+                    message: message,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final user = snapshot.data;
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.xl,
+              ),
               children: [
-                _Row(
-                  icon: Icons.qr_code_rounded,
-                  label: 'Donor card',
-                  onTap: () =>
-                      Navigator.pushNamed(context, AppRoutes.donorCard),
+                _Header(scheme: scheme, user: user),
+                const SizedBox(height: AppSpacing.xl),
+                const SectionHeader('Account'),
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _Row(
+                        icon: Icons.qr_code_rounded,
+                        label: 'Donor card',
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.donorCard,
+                        ),
+                      ),
+                      _Divider(scheme: scheme),
+                      _Row(
+                        icon: Icons.monitor_heart_outlined,
+                        label: 'Medical summary',
+                        onTap: () => _showInfoSheet(
+                          title: 'Medical summary',
+                          icon: Icons.monitor_heart_outlined,
+                          message: 'Your blood group, eligibility, donation count, and next eligible date are shown across the home, donor card, and history screens.',
+                          actionLabel: 'View donor card',
+                          onAction: () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, AppRoutes.donorCard);
+                          },
+                        ),
+                      ),
+                      _Divider(scheme: scheme),
+                      _Row(
+                        icon: Icons.contact_emergency_outlined,
+                        label: 'Emergency contact',
+                        onTap: () => _showInfoSheet(
+                          title: 'Emergency contact',
+                          icon: Icons.contact_emergency_outlined,
+                          message: 'Emergency contact editing is stored on the backend profile endpoint. Ask staff to verify this information before donation day.',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                _Divider(scheme: scheme),
-                _Row(
-                  icon: Icons.monitor_heart_outlined,
-                  label: 'Medical summary',
-                  onTap: () {},
+                const SizedBox(height: AppSpacing.xl),
+                const SectionHeader('Notifications'),
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      SwitchListTile.adaptive(
+                        value: _push,
+                        onChanged: (v) {
+                          setState(() => _push = v);
+                          _updatePreference('push_notifications_enabled', v);
+                        },
+                        title: const Text('Push notifications'),
+                        subtitle: const Text('Appointments and urgent alerts'),
+                      ),
+                      _Divider(scheme: scheme),
+                      SwitchListTile.adaptive(
+                        value: _sms,
+                        onChanged: (v) {
+                          setState(() => _sms = v);
+                          _updatePreference('sms_reminders_enabled', v);
+                        },
+                        title: const Text('SMS reminders'),
+                        subtitle: const Text('7, 3, 1 day reminders'),
+                      ),
+                      _Divider(scheme: scheme),
+                      SwitchListTile.adaptive(
+                        value: _shareAnon,
+                        onChanged: (v) {
+                          setState(() => _shareAnon = v);
+                          _updatePreference('share_anonymized_data', v);
+                        },
+                        title: const Text('Share anonymized data'),
+                        subtitle: const Text(
+                          'Helps NBTS planning and donor safety',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                _Divider(scheme: scheme),
-                _Row(
-                  icon: Icons.contact_emergency_outlined,
-                  label: 'Emergency contact',
-                  onTap: () {},
+                const SizedBox(height: AppSpacing.xl),
+                const SectionHeader('Appearance'),
+                ValueListenableBuilder<ThemeMode>(
+                  valueListenable: ThemeController.mode,
+                  builder: (context, mode, _) => SegmentedButton<ThemeMode>(
+                    segments: const [
+                      ButtonSegment(
+                        value: ThemeMode.light,
+                        label: Text('Light'),
+                        icon: Icon(Icons.light_mode_outlined),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.dark,
+                        label: Text('Dark'),
+                        icon: Icon(Icons.dark_mode_outlined),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.system,
+                        label: Text('System'),
+                        icon: Icon(Icons.brightness_auto_outlined),
+                      ),
+                    ],
+                    selected: {mode},
+                    onSelectionChanged: (v) => ThemeController.set(v.first),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                const SectionHeader('Language'),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'English', label: Text('English')),
+                    ButtonSegment(value: 'Swahili', label: Text('Swahili')),
+                  ],
+                  selected: {_language},
+                  onSelectionChanged: (v) => setState(() => _language = v.first),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                const SectionHeader('Support'),
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _Row(
+                        icon: Icons.help_outline_rounded,
+                        label: 'FAQ and donor guide',
+                        onTap: () => _showInfoSheet(
+                          title: 'FAQ and donor guide',
+                          icon: Icons.help_outline_rounded,
+                          message: 'Bring a valid ID, eat before donating, drink water, and tell NBTS staff about medication or recent illness before donation.',
+                        ),
+                      ),
+                      _Divider(scheme: scheme),
+                      _Row(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        label: 'Contact NBTS support',
+                        onTap: () => _showInfoSheet(
+                          title: 'Contact NBTS support',
+                          icon: Icons.chat_bubble_outline_rounded,
+                          message: 'For urgent appointment or donor record support, contact your nearest NBTS center or use the center list in the app.',
+                          actionLabel: 'Find centers',
+                          onAction: () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, AppRoutes.centers);
+                          },
+                        ),
+                      ),
+                      _Divider(scheme: scheme),
+                      _Row(
+                        icon: Icons.privacy_tip_outlined,
+                        label: 'Account and privacy',
+                        onTap: () => _showInfoSheet(
+                          title: 'Account and privacy',
+                          icon: Icons.privacy_tip_outlined,
+                          message: 'Your donor profile is used for eligibility, appointment reminders, donation history, and NBTS planning. You can sign out from this screen any time.',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                OutlinedButton.icon(
+                  onPressed: _signOut,
+                  icon: const Icon(Icons.logout_rounded),
+                  label: const Text('Sign out'),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const SectionHeader('Notifications'),
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                SwitchListTile.adaptive(
-                  value: _push,
-                  onChanged: (v) => setState(() => _push = v),
-                  title: const Text('Push notifications'),
-                  subtitle: const Text('Appointments and urgent alerts'),
-                ),
-                _Divider(scheme: scheme),
-                SwitchListTile.adaptive(
-                  value: _sms,
-                  onChanged: (v) => setState(() => _sms = v),
-                  title: const Text('SMS reminders'),
-                  subtitle: const Text('7, 3, 1 day reminders'),
-                ),
-                _Divider(scheme: scheme),
-                SwitchListTile.adaptive(
-                  value: _shareAnon,
-                  onChanged: (v) => setState(() => _shareAnon = v),
-                  title: const Text('Share anonymized data'),
-                  subtitle:
-                      const Text('Helps NBTS planning and donor safety'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const SectionHeader('Appearance'),
-          ValueListenableBuilder<ThemeMode>(
-            valueListenable: ThemeController.mode,
-            builder: (context, mode, _) => SegmentedButton<ThemeMode>(
-              segments: const [
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  label: Text('Light'),
-                  icon: Icon(Icons.light_mode_outlined),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  label: Text('Dark'),
-                  icon: Icon(Icons.dark_mode_outlined),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.system,
-                  label: Text('System'),
-                  icon: Icon(Icons.brightness_auto_outlined),
-                ),
-              ],
-              selected: {mode},
-              onSelectionChanged: (v) => ThemeController.set(v.first),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const SectionHeader('Language'),
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'English', label: Text('English')),
-              ButtonSegment(value: 'Swahili', label: Text('Swahili')),
-            ],
-            selected: {_language},
-            onSelectionChanged: (v) => setState(() => _language = v.first),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const SectionHeader('Support'),
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                _Row(
-                  icon: Icons.help_outline_rounded,
-                  label: 'FAQ and donor guide',
-                  onTap: () {},
-                ),
-                _Divider(scheme: scheme),
-                _Row(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: 'Contact NBTS support',
-                  onTap: () {},
-                ),
-                _Divider(scheme: scheme),
-                _Row(
-                  icon: Icons.privacy_tip_outlined,
-                  label: 'Account and privacy',
-                  onTap: () {},
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          OutlinedButton.icon(
-            onPressed: () => Navigator.pushNamedAndRemoveUntil(
-              context,
-              AppRoutes.welcome,
-              (_) => false,
-            ),
-            icon: const Icon(Icons.logout_rounded),
-            label: const Text('Sign out'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.scheme});
+  const _Header({required this.scheme, required this.user});
 
   final ColorScheme scheme;
+  final User? user;
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +370,7 @@ class _Header extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      AppData.donorName,
+                      _text(user?.name, fallback: 'Donor profile pending'),
                       style: TextStyle(
                         color: scheme.onSurface,
                         fontSize: 17,
@@ -221,7 +380,7 @@ class _Header extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      AppData.donorId,
+                      _text(user?.donorId, fallback: 'Pending NBTS ID'),
                       style: TextStyle(
                         color: scheme.onSurfaceVariant,
                         fontSize: 12,
@@ -239,19 +398,19 @@ class _Header extends StatelessWidget {
             children: [
               _Metric(
                 label: 'Blood',
-                value: AppData.bloodType,
+                value: _text(user?.bloodGroup, fallback: 'Pending'),
                 scheme: scheme,
               ),
               const SizedBox(width: AppSpacing.lg),
               _Metric(
                 label: 'Donations',
-                value: '${AppData.totalDonations}',
+                value: '${user?.totalDonations ?? 0}',
                 scheme: scheme,
               ),
               const SizedBox(width: AppSpacing.lg),
               _Metric(
                 label: 'Points',
-                value: '${AppData.loyaltyPoints}',
+                value: '${user?.loyaltyPoints ?? 0}',
                 scheme: scheme,
               ),
             ],
@@ -259,6 +418,11 @@ class _Header extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static String _text(String? value, {required String fallback}) {
+    if (value == null || value.trim().isEmpty) return fallback;
+    return value;
   }
 }
 
@@ -340,3 +504,6 @@ class _Divider extends StatelessWidget {
     return Divider(height: 1, thickness: 1, color: scheme.outlineVariant);
   }
 }
+
+
+

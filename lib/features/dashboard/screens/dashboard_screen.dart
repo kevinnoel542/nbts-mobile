@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/appointment.dart';
+import 'package:nbts/core/data/models/article.dart';
 import 'package:nbts/core/data/models/campaign.dart';
+import 'package:nbts/core/data/models/eligibility.dart';
 import 'package:nbts/core/data/models/user.dart';
 import 'package:nbts/core/routes/app_routes.dart';
+import 'package:nbts/core/notifications/notification_counter.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
 import 'package:nbts/core/widgets/app_card.dart';
 import 'package:nbts/core/widgets/section_header.dart';
@@ -21,6 +24,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late Future<User?> _profileFuture;
   late Future<Appointment?> _upcomingFuture;
   late Future<List<Campaign>> _campaignsFuture;
+  late Future<List<Article>> _articlesFuture;
+  late Future<Eligibility?> _eligibilityFuture;
 
   @override
   void initState() {
@@ -41,11 +46,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
         s.appointments.fetchUpcoming().catchError((_) async => null);
     _campaignsFuture =
         s.campaigns.fetchAll().catchError((_) async => <Campaign>[]);
+    _articlesFuture =
+        s.articles.fetchAll().catchError((_) async => <Article>[]);
+    _eligibilityFuture = () async {
+      try {
+        return await s.eligibility.fetch();
+      } catch (_) {
+        return null;
+      }
+    }();
+    _loadNotificationCount();
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      final count = await Services.instance.notifications.unreadCount();
+      setNotificationCount(count);
+    } catch (_) {
+      // Keep the current badge if the count endpoint is temporarily unavailable.
+    }
   }
 
   Future<void> _refresh() async {
     setState(_load);
-    await Future.wait([_profileFuture, _upcomingFuture, _campaignsFuture]);
+    await Future.wait([
+      _profileFuture,
+      _upcomingFuture,
+      _campaignsFuture,
+      _articlesFuture,
+      _eligibilityFuture,
+    ]);
   }
 
   @override
@@ -63,9 +93,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+          ValueListenableBuilder<int>(
+            valueListenable: notificationCount,
+            builder: (context, count, _) {
+              return IconButton(
+                icon: Badge.count(
+                  count: count,
+                  isLabelVisible: count > 0,
+                  child: const Icon(Icons.notifications_outlined),
+                ),
+                onPressed: () async {
+                  await Navigator.pushNamed(context, AppRoutes.notifications);
+                  if (context.mounted) _loadNotificationCount();
+                },
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.qr_code_rounded),
@@ -97,7 +139,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: AppSpacing.lg),
                     const _UrgentRequestBanner(),
                     const SizedBox(height: AppSpacing.md),
-                    _EligibilityCard(scheme: scheme, user: user),
+                    FutureBuilder<Eligibility?>(
+                      future: _eligibilityFuture,
+                      builder: (context, eligibilitySnap) {
+                        return _EligibilityCard(
+                          scheme: scheme,
+                          user: user,
+                          eligibility: eligibilitySnap.data,
+                        );
+                      },
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     _NextAppointmentCard(
                       scheme: scheme,
@@ -114,27 +165,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     SectionHeader(
                       'For you',
                       action: TextButton(
-                        onPressed: () {},
+                        onPressed: () => _showForYouSheet(
+                          context,
+                          _campaignsFuture,
+                          _articlesFuture,
+                        ),
                         child: const Text('See all'),
                       ),
                     ),
                     FutureBuilder<List<Campaign>>(
                       future: _campaignsFuture,
-                      builder: (context, snap) {
-                        final list = snap.data ?? const <Campaign>[];
-                        if (list.isEmpty) {
-                          return _ArticlesPlaceholder(scheme: scheme);
-                        }
-                        return Column(
-                          children: [
-                            for (final c in list)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  bottom: AppSpacing.md,
+                      builder: (context, campaignSnap) {
+                        final campaigns = campaignSnap.data ?? const <Campaign>[];
+                        if (campaigns.isNotEmpty) {
+                          return Column(
+                            children: [
+                              for (final campaign in campaigns.take(3))
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.md,
+                                  ),
+                                  child: _CampaignTile(campaign: campaign),
                                 ),
-                                child: _CampaignTile(campaign: c),
-                              ),
-                          ],
+                            ],
+                          );
+                        }
+
+                        return FutureBuilder<List<Article>>(
+                          future: _articlesFuture,
+                          builder: (context, articleSnap) {
+                            final articles = articleSnap.data ?? const <Article>[];
+                            if (articles.isEmpty) {
+                              return _ArticlesPlaceholder(scheme: scheme);
+                            }
+                            return Column(
+                              children: [
+                                for (final article in articles.take(3))
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: AppSpacing.md,
+                                    ),
+                                    child: _ArticleTile(article: article),
+                                  ),
+                              ],
+                            );
+                          },
                         );
                       },
                     ),
@@ -198,21 +273,28 @@ class _Greeting extends StatelessWidget {
 }
 
 class _EligibilityCard extends StatelessWidget {
-  const _EligibilityCard({required this.scheme, required this.user});
+  const _EligibilityCard({
+    required this.scheme,
+    required this.user,
+    required this.eligibility,
+  });
 
   final ColorScheme scheme;
   final User? user;
+  final Eligibility? eligibility;
 
   @override
   Widget build(BuildContext context) {
-    final nextDate = user?.nextEligibleDate;
+    final nextDate = eligibility?.nextEligibleDate ?? user?.nextEligibleDate;
     final now = DateTime.now();
-    final isEligible = nextDate == null || !nextDate.isAfter(now);
-    final dateText = nextDate == null
-        ? 'Pending medical verification'
-        : isEligible
-            ? 'Eligible to donate'
-            : 'Next eligible: ${_formatDate(nextDate)}';
+    final isEligible = eligibility?.eligible ??
+        (nextDate == null || !nextDate.isAfter(now));
+    final dateText = eligibility?.message ??
+        (nextDate == null
+            ? 'Pending medical verification'
+            : isEligible
+                ? 'Eligible to donate'
+                : 'Next eligible: ${_formatDate(nextDate)}');
 
     return AppCard(
       child: Column(
@@ -398,7 +480,7 @@ class _CampaignTile extends StatelessWidget {
     final summary = campaign.summary ?? '';
     final isUrgent = campaign.urgent == true;
     return AppCard(
-      onTap: () {},
+      onTap: () => _showCampaignSheet(context, campaign),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
@@ -469,6 +551,83 @@ class _CampaignTile extends StatelessWidget {
   }
 }
 
+class _ArticleTile extends StatelessWidget {
+  const _ArticleTile({required this.article});
+
+  final Article article;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final category = (article.category ?? 'Article').toUpperCase();
+    final summary = article.summary ?? article.body ?? '';
+    return AppCard(
+      onTap: () => _showArticleSheet(context, article),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHigh,
+              borderRadius: AppRadius.chip,
+            ),
+            child: Icon(
+              Icons.article_outlined,
+              size: 20,
+              color: scheme.onSurface,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  category,
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  article.title,
+                  style: TextStyle(
+                    color: scheme.onSurface,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                if (summary.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    summary,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: scheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+}
 class _ArticlesPlaceholder extends StatelessWidget {
   const _ArticlesPlaceholder({required this.scheme});
 
@@ -488,7 +647,7 @@ class _ArticlesPlaceholder extends StatelessWidget {
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
-              'No campaigns available right now.',
+              'No campaigns or articles available right now.',
               style: TextStyle(
                 color: scheme.onSurfaceVariant,
                 fontSize: 13,
@@ -706,3 +865,136 @@ class _ImpactCard extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+void _showForYouSheet(
+  BuildContext context,
+  Future<List<Campaign>> campaignsFuture,
+  Future<List<Article>> articlesFuture,
+) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => FutureBuilder<List<Object>>(
+      future: Future.wait([campaignsFuture, articlesFuture]).then(
+        (lists) => [...lists[0], ...lists[1]],
+      ),
+      builder: (context, snapshot) {
+        final items = snapshot.data ?? const <Object>[];
+        return ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.xl,
+          ),
+          children: [
+            Text(
+              'For you',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            if (items.isEmpty)
+              const Text('No campaigns or articles available right now.'),
+            for (final item in items)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  item is Campaign ? Icons.campaign_outlined : Icons.article_outlined,
+                ),
+                title: Text(item is Campaign ? item.title : (item as Article).title),
+                subtitle: Text(
+                  item is Campaign
+                      ? (item.summary ?? 'Campaign update')
+                      : ((item as Article).summary ?? item.body ?? 'Article'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (item is Campaign) _showCampaignSheet(context, item);
+                  if (item is Article) _showArticleSheet(context, item);
+                },
+              ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+void _showCampaignSheet(BuildContext context, Campaign campaign) {
+  _showDetailSheet(
+    context,
+    title: campaign.title,
+    icon: Icons.campaign_outlined,
+    body: campaign.summary ?? 'No campaign details provided yet.',
+    actionLabel: 'Find centers',
+    onAction: () {
+      Navigator.pop(context);
+      Navigator.pushNamed(context, AppRoutes.centers);
+    },
+  );
+}
+
+void _showArticleSheet(BuildContext context, Article article) {
+  _showDetailSheet(
+    context,
+    title: article.title,
+    icon: Icons.article_outlined,
+    body: article.body ?? article.summary ?? 'No article details provided yet.',
+  );
+}
+
+void _showDetailSheet(
+  BuildContext context, {
+  required String title,
+  required IconData icon,
+  required String body,
+  String actionLabel = 'Done',
+  VoidCallback? onAction,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.xl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(body),
+          const SizedBox(height: AppSpacing.lg),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              onPressed: onAction ?? () => Navigator.pop(context),
+              child: Text(actionLabel),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+

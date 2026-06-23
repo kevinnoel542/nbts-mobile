@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:nbts/core/data/app_data.dart';
+import 'package:nbts/core/api/api_client.dart';
+import 'package:nbts/core/api/service_locator.dart';
+import 'package:nbts/core/data/models/appointment.dart';
 import 'package:nbts/core/routes/app_routes.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
 import 'package:nbts/core/widgets/app_card.dart';
@@ -7,83 +9,197 @@ import 'package:nbts/core/widgets/empty_state.dart';
 import 'package:nbts/core/widgets/section_header.dart';
 import 'package:nbts/core/widgets/status_pill.dart';
 
-class AppointmentsScreen extends StatelessWidget {
+class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final appointment = AppData.nextAppointment;
+  State<AppointmentsScreen> createState() => _AppointmentsScreenState();
+}
 
+class _AppointmentsScreenState extends State<AppointmentsScreen> {
+  late Future<Appointment?> _upcomingFuture;
+  late Future<List<Appointment>> _appointmentsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  void _load() {
+    _upcomingFuture = Services.instance.appointments.fetchUpcoming();
+    _appointmentsFuture = Services.instance.appointments.fetchAll();
+  }
+
+  Future<void> _refresh() async {
+    setState(_load);
+    await Future.wait([_upcomingFuture, _appointmentsFuture]);
+  }
+  Future<void> _reschedule(Appointment appointment) async {
+    final changed = await Navigator.pushNamed(
+      context,
+      AppRoutes.bookAppointment,
+      arguments: appointment,
+    );
+    if (changed == true && mounted) {
+      await _refresh();
+    }
+  }
+
+  Future<void> _cancel(Appointment appointment) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel appointment?'),
+        content: const Text('This appointment will be marked as cancelled.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cancel appointment'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await Services.instance.appointments.cancel(appointment.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Appointment cancelled.')),
+      );
+      await _refresh();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.firstError())),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Appointments'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.sm,
-          AppSpacing.lg,
-          AppSpacing.xl,
-        ),
-        children: [
-          const SectionHeader('Next appointment'),
-          if (appointment == null)
-            AppCard(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: const EmptyState(
-                icon: Icons.event_busy_outlined,
-                title: 'No appointment booked',
-                message:
-                    'Book a donation to see your upcoming visit details here.',
+      body: FutureBuilder<List<Appointment>>(
+        future: _appointmentsFuture,
+        builder: (context, listSnap) {
+          if (listSnap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (listSnap.hasError) {
+            final message = listSnap.error is ApiException
+                ? (listSnap.error as ApiException).message
+                : 'Could not load appointments.';
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                children: [
+                  EmptyState(
+                    icon: Icons.event_busy_outlined,
+                    title: 'Appointments unavailable',
+                    message: message,
+                  ),
+                ],
               ),
-            )
-          else
-            _UpcomingCard(scheme: scheme, appointment: appointment),
-          const SizedBox(height: AppSpacing.md),
-          FilledButton.icon(
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.bookAppointment),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Book new donation'),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          SectionHeader(
-            'Nearby centers',
-            action: TextButton(
-              onPressed: () =>
-                  Navigator.pushNamed(context, AppRoutes.centers),
-              child: const Text('See all'),
-            ),
-          ),
-          if (AppData.centers.isEmpty)
-            AppCard(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: const EmptyState(
-                icon: Icons.place_outlined,
-                title: 'No centers available',
-                message:
-                    'Donation centers will appear once they are loaded from NBTS.',
-              ),
-            )
-          else
-            for (final center in AppData.centers)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: _CenterCard(center: center),
-              ),
-        ],
+            );
+          }
+
+          final appointments = listSnap.data ?? const <Appointment>[];
+          return FutureBuilder<Appointment?>(
+            future: _upcomingFuture,
+            builder: (context, upcomingSnap) {
+              final upcoming = upcomingSnap.data;
+              return RefreshIndicator(
+                onRefresh: _refresh,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                    AppSpacing.lg,
+                    AppSpacing.xl,
+                  ),
+                  children: [
+                    const SectionHeader('Next appointment'),
+                    if (upcoming == null)
+                      AppCard(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: const EmptyState(
+                          icon: Icons.event_busy_outlined,
+                          title: 'No appointment booked',
+                          message:
+                              'Book a donation to see your upcoming visit details here.',
+                        ),
+                      )
+                    else
+                      _UpcomingCard(
+                        appointment: upcoming,
+                        onReschedule: () => _reschedule(upcoming),
+                        onCancel: () => _cancel(upcoming),
+                      ),
+                    const SizedBox(height: AppSpacing.md),
+                    FilledButton.icon(
+                      onPressed: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.bookAppointment,
+                      ),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Book new donation'),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    const SectionHeader('All appointments'),
+                    if (appointments.isEmpty)
+                      AppCard(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: const EmptyState(
+                          icon: Icons.calendar_month_outlined,
+                          title: 'No appointments yet',
+                          message:
+                              'Your upcoming and past bookings will appear here.',
+                        ),
+                      )
+                    else
+                      for (final appointment in appointments)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                          child: _AppointmentCard(
+                            appointment: appointment,
+                            onReschedule: () => _reschedule(appointment),
+                            onCancel: () => _cancel(appointment),
+                          ),
+                        ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
 }
 
 class _UpcomingCard extends StatelessWidget {
-  const _UpcomingCard({required this.scheme, required this.appointment});
+  const _UpcomingCard({
+    required this.appointment,
+    required this.onReschedule,
+    required this.onCancel,
+  });
 
-  final ColorScheme scheme;
-  final String appointment;
+  final Appointment appointment;
+  final VoidCallback onReschedule;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -102,8 +218,8 @@ class _UpcomingCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const StatusPill(
-                label: 'Upcoming',
+              StatusPill(
+                label: _text(appointment.status, fallback: 'Upcoming'),
                 icon: Icons.event_available_outlined,
                 kind: StatusKind.success,
               ),
@@ -111,9 +227,9 @@ class _UpcomingCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            appointment,
+            _formatDateTime(appointment.scheduledAt),
             style: TextStyle(
-              color: scheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.2,
@@ -121,9 +237,9 @@ class _UpcomingCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            AppData.preferredCenter,
+            _text(appointment.centerName, fallback: 'NBTS center'),
             style: TextStyle(
-              color: scheme.onSurfaceVariant,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 14,
             ),
           ),
@@ -132,14 +248,14 @@ class _UpcomingCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: _canManage(appointment) ? onReschedule : null,
                   child: const Text('Reschedule'),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: _canManage(appointment) ? onCancel : null,
                   child: const Text('Cancel'),
                 ),
               ),
@@ -151,26 +267,45 @@ class _UpcomingCard extends StatelessWidget {
   }
 }
 
-class _CenterCard extends StatelessWidget {
-  const _CenterCard({required this.center});
+class _AppointmentCard extends StatelessWidget {
+  const _AppointmentCard({
+    required this.appointment,
+    required this.onReschedule,
+    required this.onCancel,
+  });
 
-  final DonationCenter center;
+  final Appointment appointment;
+  final VoidCallback onReschedule;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return AppCard(
-      onTap: () =>
-          Navigator.pushNamed(context, AppRoutes.bookAppointment),
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  center.name,
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHigh,
+              borderRadius: AppRadius.chip,
+            ),
+            child: Icon(
+              Icons.calendar_today_outlined,
+              size: 20,
+              color: scheme.onSurface,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _formatDateTime(appointment.scheduledAt),
                   style: TextStyle(
                     color: scheme.onSurface,
                     fontSize: 15,
@@ -178,35 +313,37 @@ class _CenterCard extends StatelessWidget {
                     letterSpacing: -0.2,
                   ),
                 ),
-              ),
-              StatusPill(
-                label: center.isOpen ? 'Open' : 'Closed',
-                kind: center.isOpen
-                    ? StatusKind.success
-                    : StatusKind.neutral,
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            center.address,
-            style: TextStyle(
-              color: scheme.onSurfaceVariant,
-              fontSize: 13,
+                const SizedBox(height: 4),
+                Text(
+                  _text(appointment.centerName, fallback: 'NBTS center'),
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              _Meta(
-                icon: Icons.near_me_outlined,
-                value: '${center.distanceKm} km',
+          PopupMenuButton<String>(
+            enabled: _canManage(appointment),
+            onSelected: (value) {
+              if (value == 'reschedule') onReschedule();
+              if (value == 'cancel') onCancel();
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'reschedule',
+                child: Text('Reschedule'),
               ),
-              const SizedBox(width: AppSpacing.md),
-              _Meta(icon: Icons.schedule_outlined, value: center.hours),
-              const SizedBox(width: AppSpacing.md),
-              _Meta(icon: Icons.timer_outlined, value: center.waitTime),
+              PopupMenuItem(
+                value: 'cancel',
+                child: Text('Cancel'),
+              ),
             ],
+            child: StatusPill(
+              label: _text(appointment.status, fallback: 'Booked'),
+              kind: StatusKind.neutral,
+            ),
           ),
         ],
       ),
@@ -214,29 +351,23 @@ class _CenterCard extends StatelessWidget {
   }
 }
 
-class _Meta extends StatelessWidget {
-  const _Meta({required this.icon, required this.value});
+String _text(String? value, {required String fallback}) {
+  if (value == null || value.trim().isEmpty) return fallback;
+  return value;
+}
 
-  final IconData icon;
-  final String value;
+String _formatDateTime(DateTime? date) {
+  if (date == null) return 'Date pending';
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  final hh = date.hour.toString().padLeft(2, '0');
+  final mm = date.minute.toString().padLeft(2, '0');
+  return '${months[date.month - 1]} ${date.day}, ${date.year}  $hh:$mm';
+}
 
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: scheme.onSurfaceVariant),
-        const SizedBox(width: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: scheme.onSurfaceVariant,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
+bool _canManage(Appointment appointment) {
+  final status = appointment.status?.toLowerCase().trim();
+  return status != 'completed' && status != 'cancelled';
 }

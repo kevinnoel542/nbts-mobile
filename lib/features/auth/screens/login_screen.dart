@@ -24,6 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+
+
   Future<void> _submit() async {
     final id = _identifierController.text.trim();
     final pw = _passwordController.text;
@@ -47,9 +49,9 @@ class _LoginScreenState extends State<LoginScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _formError = e.firstError());
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      setState(() => _formError = 'Something went wrong. Please try again.');
+      setState(() => _formError = e.toString());
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -173,6 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     )
                   : const Text('Sign in'),
             ),
+
             const SizedBox(height: 28),
             Center(
               child: TextButton(
@@ -198,3 +201,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+
+

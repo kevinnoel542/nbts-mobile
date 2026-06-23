@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/routes/app_routes.dart';
@@ -67,12 +69,16 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _start() async {
     _logoController.forward();
+    unawaited(Services.instance.init());
+
     await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
     _textController.forward();
     _pulseController.repeat(reverse: true);
+
     await Future.delayed(const Duration(milliseconds: 2200));
     if (!mounted) return;
+
     final route = Services.instance.tokens.isAuthenticated
         ? AppRoutes.dashboard
         : AppRoutes.welcome;
@@ -172,3 +178,5 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 }
+
+
