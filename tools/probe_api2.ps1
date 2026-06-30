@@ -1,4 +1,4 @@
-$base = 'http://192.168.0.130:8003'
+$base = 'http://192.168.0.131:8003'
 
 Write-Output '--- 401 body (any protected route) ---'
 & curl.exe -sS -H 'Accept: application/json' "$base/api/v1/profile"
@@ -47,4 +47,5 @@ foreach ($p in $probes) {
   }
   Write-Output ("{0,-6} {1,-50} -> {2}" -f $p.Method, $p.Path, $code)
 }
+
 

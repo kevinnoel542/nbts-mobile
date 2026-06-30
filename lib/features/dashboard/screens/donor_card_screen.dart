@@ -8,6 +8,7 @@ import 'package:nbts/core/widgets/app_card.dart';
 import 'package:nbts/core/widgets/empty_state.dart';
 import 'package:nbts/core/widgets/info_row.dart';
 import 'package:nbts/core/widgets/status_pill.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class DonorCardScreen extends StatefulWidget {
   const DonorCardScreen({super.key});
@@ -300,14 +301,23 @@ class _QrPanel extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: scheme.surfaceContainerHighest,
+              color: Colors.white,
               borderRadius: AppRadius.card,
               border: Border.all(color: scheme.outlineVariant),
             ),
-            child: Icon(
-              Icons.qr_code_2_rounded,
+            child: QrImageView(
+              data: card.qrPayloadText,
+              version: QrVersions.auto,
               size: 180,
-              color: scheme.onSurface,
+              backgroundColor: Colors.white,
+              eyeStyle: const QrEyeStyle(
+                eyeShape: QrEyeShape.square,
+                color: Colors.black,
+              ),
+              dataModuleStyle: const QrDataModuleStyle(
+                dataModuleShape: QrDataModuleShape.square,
+                color: Colors.black,
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -348,4 +358,5 @@ String? _formatDateTime(DateTime? date) {
   final mm = date.minute.toString().padLeft(2, '0');
   return '${_formatDate(date)}  $hh:$mm';
 }
+
 

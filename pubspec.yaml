@@ -38,6 +38,7 @@ dependencies:
   http: ^1.6.0
   firebase_core: ^4.2.1
   firebase_messaging: ^16.0.4
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:
@@ -118,6 +119,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+
 
 
 

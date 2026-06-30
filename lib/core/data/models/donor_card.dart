@@ -40,17 +40,29 @@ class DonorCard {
   factory DonorCard.fromJson(Map<String, dynamic> json) {
     final donor = readObject(json, 'donor');
     final stats = readObject(json, 'stats');
-    final qrPayload = readObject(json, 'qr_payload');
+    final qrPayload = json['qr_payload'];
+    final qrPayloadObject = qrPayload is Map<String, dynamic>
+        ? qrPayload
+        : qrPayload is Map
+            ? qrPayload.cast<String, dynamic>()
+            : null;
     final donorId = readString(json, ['donor_id']) ??
-        readString(qrPayload, ['donor_id']) ??
+        readString(donor, ['donor_id', 'donorId', 'nbts_id']) ??
+        readString(qrPayloadObject, ['donor_id']) ??
         'Pending NBTS ID';
+    final qrPayloadText = qrPayload is String && qrPayload.trim().isNotEmpty
+        ? qrPayload
+        : qrPayloadObject == null
+            ? donorId
+            : jsonEncode(qrPayloadObject);
 
     return DonorCard(
       donorId: donorId,
-      qrPayloadText: qrPayload == null ? donorId : jsonEncode(qrPayload),
-      name: readString(donor, ['name']),
-      phone: readString(donor, ['phone']),
-      bloodGroup: readString(donor, ['blood_group', 'blood_type']),
+      qrPayloadText: qrPayloadText,
+      name: readString(json, ['name']) ?? readString(donor, ['name']),
+      phone: readString(json, ['phone']) ?? readString(donor, ['phone']),
+      bloodGroup: readString(json, ['blood_group', 'blood_type']) ??
+          readString(donor, ['blood_group', 'blood_type']),
       bloodGroupVerified: readBool(donor, ['blood_group_verified']),
       region: readString(donor, ['region']),
       preferredCenter: readString(donor, ['preferred_center']),

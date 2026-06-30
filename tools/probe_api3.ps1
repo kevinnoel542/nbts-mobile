@@ -1,4 +1,4 @@
-$base = 'http://192.168.0.130:8003'
+$base = 'http://192.168.0.131:8003'
 
 Write-Output '--- POST /api/v1/auth/register (empty body, shows required fields) ---'
 & curl.exe -sS -X POST -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{}' "$base/api/v1/auth/register"
@@ -49,4 +49,5 @@ foreach ($p in $probes) {
 Write-Output ''
 Write-Output '--- Show first 60 lines of /api/v1 404 trace (looks for route list hints) ---'
 & curl.exe -sS -H 'Accept: application/json' "$base/api/v1" | Select-Object -First 60
+
 

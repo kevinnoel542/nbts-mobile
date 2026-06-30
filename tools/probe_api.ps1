@@ -1,4 +1,4 @@
-$base = 'http://192.168.0.130:8003'
+$base = 'http://192.168.0.131:8003'
 $paths = @(
   '/api/v1',
   '/api/v1/',
@@ -30,4 +30,5 @@ foreach ($p in $paths) {
   $result = & curl.exe -sS -H 'Accept: application/json' -H 'X-Requested-With: XMLHttpRequest' -o $out -w '%{http_code}|%{content_type}|%{size_download}' $u 2>&1
   Write-Output ("$p  ->  $result")
 }
+
 

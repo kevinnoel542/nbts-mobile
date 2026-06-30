@@ -90,23 +90,16 @@ class AuthRepository extends ChangeNotifier {
     if (response is! Map<String, dynamic>) {
       throw const ApiException('Unexpected auth response');
     }
-    final token = readString(response, [
-      'token',
-      'access_token',
-      'auth_token',
-      'plain_text_token',
-    ]);
+    final data = readObject(response, 'data');
+    final token = _readAuthToken(response) ?? _readAuthToken(data);
     if (token == null) {
       throw const ApiException('Auth response did not include a token');
     }
 
-    Map<String, dynamic>? userJson;
-    final rawUser = response['user'] ?? response['data'] ?? response['profile'];
-    if (rawUser is Map<String, dynamic>) {
-      userJson = rawUser;
-    } else if (rawUser is Map) {
-      userJson = rawUser.cast<String, dynamic>();
-    }
+    Map<String, dynamic>? userJson = readObject(response, 'user') ??
+        readObject(response, 'profile') ??
+        readObject(data, 'user') ??
+        readObject(data, 'profile');
 
     final wrappedUser = userJson?['data'];
     if (wrappedUser is Map<String, dynamic>) {
@@ -126,6 +119,17 @@ class AuthRepository extends ChangeNotifier {
     }
     return user ?? await fetchCurrentUser();
   }
+
+  String? _readAuthToken(Map<String, dynamic>? json) {
+    return readString(json, [
+      'token',
+      'access_token',
+      'auth_token',
+      'plain_text_token',
+      'plainTextToken',
+    ]);
+  }
 }
+
 
 
