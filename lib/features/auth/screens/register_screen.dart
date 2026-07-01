@@ -169,7 +169,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       await Services.instance.auth.register(
         name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
+        email: _emailController.text.trim().isEmpty
+            ? null
+            : _emailController.text.trim(),
         phone: _phoneController.text.trim(),
         password: _passwordController.text,
         bloodGroup: _bloodGroup!,
@@ -261,13 +263,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 12),
               _Field(
                 controller: _emailController,
-                label: 'Email',
+                label: 'Email (optional)',
                 icon: Icons.mail_outline,
                 keyboardType: TextInputType.emailAddress,
                 errorText: _err('email'),
                 validator: (v) {
                   final t = v?.trim() ?? '';
-                  if (t.isEmpty) return 'Required';
+                  if (t.isEmpty) return null;
                   if (!t.contains('@') || !t.contains('.')) {
                     return 'Enter a valid email';
                   }

@@ -38,7 +38,7 @@ class AuthRepository extends ChangeNotifier {
 
   Future<User> register({
     required String name,
-    required String email,
+    String? email,
     required String phone,
     required String password,
     required String bloodGroup,
@@ -51,7 +51,7 @@ class AuthRepository extends ChangeNotifier {
       authenticated: false,
       body: {
         'name': name,
-        'email': email,
+        if (email != null && email.isNotEmpty) 'email': email,
         'phone': phone,
         'password': password,
         'password_confirmation': password,

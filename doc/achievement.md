@@ -244,3 +244,23 @@ Swahili -> sw
 ` 
 
 This fixes Laravel validation errors such as The selected language is invalid. during PUT /api/v1/profile.
+
+## 2026-07-01 Optional Email Registration
+
+Mobile registration now allows donors to register with phone number only.
+
+Flutter behavior:
+
+- Phone remains required.
+- Email is optional.
+- If email is empty, Flutter omits `email` from `POST /api/v1/auth/register`.
+- If email is provided, Flutter validates basic email format before sending.
+
+Laravel should update registration validation so email is nullable/optional when phone is present. Suggested rule shape:
+
+```text
+phone: required, unique users/donor phone rule
+email: nullable, email, unique users email rule
+```
+
+Login already supports `identifier`, so users can sign in using either phone number or email.
