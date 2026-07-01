@@ -151,8 +151,8 @@ class _NavIcon extends StatelessWidget {
 
     return SvgPicture.asset(
       asset,
-      width: 21,
-      height: 21,
+      width: 18,
+      height: 18,
       colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
     );
   }

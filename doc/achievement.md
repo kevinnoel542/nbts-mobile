@@ -1,4 +1,4 @@
-# NBTS Mobile Achievement Log
+﻿# NBTS Mobile Achievement Log
 
 ## Purpose
 
@@ -296,12 +296,12 @@ Laravel should make sure the centers endpoint returns useful values for:
 
 ## 2026-07-01 Dynamic Appointment Slots
 
-Mobile booking now supports Laravel-controlled appointment times.
+Mobile booking now supports Laravel-controlled appointment times and is aligned with the existing Laravel available-slots route.
 
 Flutter now calls this endpoint after the donor selects a center and date:
 
 ```text
-GET /api/v1/appointments/slots?center_id=1&date=2026-07-01
+GET /api/v1/blood-centers/1/available-slots?date=2026-07-01
 ```
 
 Expected Laravel response:
@@ -334,4 +334,5 @@ reason / message / status_label
 ```
 
 If Laravel has not added the endpoint yet, Flutter falls back to standard times so the app does not break. Laravel should still do the final availability check inside `POST /api/v1/appointments` and `PUT /api/v1/appointments/{id}` because a slot can become full while the donor is on the booking screen.
+
 

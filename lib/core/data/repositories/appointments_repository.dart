@@ -34,7 +34,7 @@ class AppointmentsRepository {
   }) async {
     final day = _formatDate(date);
     final response = await _api.get(
-      '/appointments/slots?center_id=$centerId&date=$day',
+      '/blood-centers/$centerId/available-slots?date=$day',
     );
     return readListPayload(response).map(AppointmentSlot.fromJson).toList();
   }
