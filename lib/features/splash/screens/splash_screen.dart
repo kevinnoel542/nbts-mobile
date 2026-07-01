@@ -51,12 +51,10 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _textOffset = Tween<Offset>(
-      begin: const Offset(0, 0.4),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
-    );
+    _textOffset = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
+        );
     _textOpacity = CurvedAnimation(
       parent: _textController,
       curve: Curves.easeOut,
@@ -92,6 +90,7 @@ class _SplashScreenState extends State<SplashScreen>
         route = AppRoutes.dashboard;
       }
     }
+    if (!mounted) return;
     Navigator.pushReplacementNamed(context, route);
   }
 
@@ -188,8 +187,3 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 }
-
-
-
-
-

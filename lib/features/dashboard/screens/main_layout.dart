@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nbts/features/appointments/screens/appointments_screen.dart';
 import 'package:nbts/features/dashboard/screens/dashboard_screen.dart';
 import 'package:nbts/features/donate/screens/find_centers_screen.dart';
@@ -37,33 +38,62 @@ class _MainLayoutState extends State<MainLayout> {
           onDestinationSelected: (i) => setState(() => _index = i),
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
+              icon: _NavIcon('assets/nav/home.svg'),
+              selectedIcon: _NavIcon('assets/nav/home.svg', selected: true),
               label: 'Home',
             ),
             NavigationDestination(
-              icon: Icon(Icons.calendar_today_outlined),
-              selectedIcon: Icon(Icons.calendar_today_rounded),
+              icon: _NavIcon('assets/nav/calendar-clock.svg'),
+              selectedIcon: _NavIcon(
+                'assets/nav/reminder-appointment.svg',
+                selected: true,
+              ),
               label: 'Book',
             ),
             NavigationDestination(
-              icon: Icon(Icons.place_outlined),
-              selectedIcon: Icon(Icons.place_rounded),
+              icon: _NavIcon('assets/nav/hospital.svg'),
+              selectedIcon: _NavIcon('assets/nav/hospital.svg', selected: true),
               label: 'Centers',
             ),
             NavigationDestination(
-              icon: Icon(Icons.history_outlined),
-              selectedIcon: Icon(Icons.history_rounded),
+              icon: _NavIcon('assets/nav/rectangle-vertical-history.svg'),
+              selectedIcon: _NavIcon(
+                'assets/nav/rectangle-vertical-history.svg',
+                selected: true,
+              ),
               label: 'History',
             ),
             NavigationDestination(
-              icon: Icon(Icons.person_outline_rounded),
-              selectedIcon: Icon(Icons.person_rounded),
+              icon: _NavIcon('assets/nav/circle-user.svg'),
+              selectedIcon: _NavIcon(
+                'assets/nav/circle-user.svg',
+                selected: true,
+              ),
               label: 'Profile',
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NavIcon extends StatelessWidget {
+  const _NavIcon(this.asset, {this.selected = false});
+
+  final String asset;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = selected ? scheme.primary : scheme.onSurfaceVariant;
+
+    return SvgPicture.asset(
+      asset,
+      width: 24,
+      height: 24,
+      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
     );
   }
 }

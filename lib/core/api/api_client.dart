@@ -6,12 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:nbts/core/api/api_config.dart';
 
 class ApiException implements Exception {
-  const ApiException(
-    this.message, {
-    this.statusCode,
-    this.body,
-    this.errors,
-  });
+  const ApiException(this.message, {this.statusCode, this.body, this.errors});
 
   final String message;
   final int? statusCode;
@@ -39,7 +34,7 @@ typedef TokenProvider = String? Function();
 
 class ApiClient {
   ApiClient({http.Client? httpClient, this.tokenProvider})
-      : _httpClient = httpClient ?? http.Client();
+    : _httpClient = httpClient ?? http.Client();
 
   final http.Client _httpClient;
   TokenProvider? tokenProvider;
@@ -52,10 +47,12 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     bool authenticated = true,
   }) async {
-    return _send(() => _httpClient.get(
-          ApiConfig.endpoint(path, queryParameters),
-          headers: _headers(headers, authenticated),
-        ));
+    return _send(
+      () => _httpClient.get(
+        ApiConfig.endpoint(path, queryParameters),
+        headers: _headers(headers, authenticated),
+      ),
+    );
   }
 
   Future<dynamic> post(
@@ -64,11 +61,13 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool authenticated = true,
   }) async {
-    return _send(() => _httpClient.post(
-          ApiConfig.endpoint(path),
-          headers: _headers(headers, authenticated),
-          body: jsonEncode(body ?? const {}),
-        ));
+    return _send(
+      () => _httpClient.post(
+        ApiConfig.endpoint(path),
+        headers: _headers(headers, authenticated),
+        body: jsonEncode(body ?? const {}),
+      ),
+    );
   }
 
   Future<dynamic> put(
@@ -77,11 +76,13 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool authenticated = true,
   }) async {
-    return _send(() => _httpClient.put(
-          ApiConfig.endpoint(path),
-          headers: _headers(headers, authenticated),
-          body: jsonEncode(body ?? const {}),
-        ));
+    return _send(
+      () => _httpClient.put(
+        ApiConfig.endpoint(path),
+        headers: _headers(headers, authenticated),
+        body: jsonEncode(body ?? const {}),
+      ),
+    );
   }
 
   Future<dynamic> delete(
@@ -89,10 +90,12 @@ class ApiClient {
     Map<String, String>? headers,
     bool authenticated = true,
   }) async {
-    return _send(() => _httpClient.delete(
-          ApiConfig.endpoint(path),
-          headers: _headers(headers, authenticated),
-        ));
+    return _send(
+      () => _httpClient.delete(
+        ApiConfig.endpoint(path),
+        headers: _headers(headers, authenticated),
+      ),
+    );
   }
 
   Future<dynamic> _send(Future<http.Response> Function() send) async {
@@ -133,10 +136,14 @@ class ApiClient {
       try {
         decoded = jsonDecode(body);
       } on FormatException {
-        final preview = body
-            .replaceAll(RegExp(r'\s+'), ' ')
-            .trim();
-        final message = preview.isEmpty
+        final preview = body.replaceAll(RegExp(r'\s+'), ' ').trim();
+        final looksLikeHtml =
+            preview.startsWith('<!DOCTYPE') ||
+            preview.startsWith('<html') ||
+            preview.contains('<body');
+        final message = looksLikeHtml
+            ? 'API route not found. Check the Laravel API URL and port.'
+            : preview.isEmpty
             ? 'Server returned ${response.statusCode} with an invalid response.'
             : 'Server returned ${response.statusCode}: ${preview.length > 160 ? preview.substring(0, 160) : preview}';
         throw ApiException(
@@ -176,4 +183,3 @@ class ApiClient {
     );
   }
 }
-

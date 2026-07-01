@@ -17,6 +17,7 @@ class User {
     this.totalDonations,
     this.totalVolumeMl,
     this.nextEligibleDate,
+    this.profileComplete,
   });
 
   final int id;
@@ -34,13 +35,15 @@ class User {
   final int? totalDonations;
   final int? totalVolumeMl;
   final DateTime? nextEligibleDate;
+  final bool? profileComplete;
 
   bool get isDonorProfileComplete =>
-      _hasText(phone) &&
-      _hasText(bloodGroup) &&
-      _hasText(gender) &&
-      _hasText(region) &&
-      dateOfBirth != null;
+      profileComplete ??
+      (_hasText(phone) &&
+          _hasText(bloodGroup) &&
+          _hasText(gender) &&
+          _hasText(region) &&
+          dateOfBirth != null);
 
   factory User.fromJson(Map<String, dynamic> json) {
     final donorProfile = readObject(json, 'donor_profile');
@@ -54,35 +57,54 @@ class User {
       gender: readString(json, ['gender', 'sex']),
       region: readString(json, ['region', 'location', 'city']),
       dateOfBirth: readDate(json, ['date_of_birth', 'dob', 'birth_date']),
-      donorId: readString(json, ['donor_id', 'donorId', 'nbts_id']) ??
+      donorId:
+          readString(json, ['donor_id', 'donorId', 'nbts_id']) ??
           readString(profile, ['donor_id', 'donorId', 'nbts_id']),
-      preferredCenter: readString(
-        json,
-        ['preferred_center', 'preferred_center_name', 'center'],
-      ),
+      preferredCenter: readString(json, [
+        'preferred_center',
+        'preferred_center_name',
+        'center',
+      ]),
       loyaltyTier: readString(json, ['loyalty_tier', 'tier']),
       loyaltyPoints: readInt(json, ['loyalty_points', 'points']),
-      totalDonations: readInt(
-            json,
-            ['total_donations', 'donations_count', 'donation_count'],
-          ) ??
+      totalDonations:
+          readInt(json, [
+            'total_donations',
+            'donations_count',
+            'donation_count',
+          ]) ??
           readInt(profile, ['total_donations', 'donations_count']),
-      totalVolumeMl: readInt(
-        json,
-        ['total_volume_ml', 'total_volume', 'volume_ml'],
-      ),
-      nextEligibleDate: readDate(
-            json,
-            ['next_eligible_date', 'next_eligible_at', 'eligible_date'],
-          ) ??
+      totalVolumeMl: readInt(json, [
+        'total_volume_ml',
+        'total_volume',
+        'volume_ml',
+      ]),
+      nextEligibleDate:
+          readDate(json, [
+            'next_eligible_date',
+            'next_eligible_at',
+            'eligible_date',
+          ]) ??
           readDate(profile, [
             'next_eligible_donation_date',
             'next_eligible_date',
             'eligible_date',
+          ]),
+      profileComplete:
+          readBool(json, [
+            'profile_complete',
+            'is_profile_complete',
+            'profileComplete',
+            'donor_profile_complete',
+          ]) ??
+          readBool(profile, [
+            'profile_complete',
+            'is_profile_complete',
+            'profileComplete',
+            'donor_profile_complete',
           ]),
     );
   }
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
-

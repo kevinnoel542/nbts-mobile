@@ -7,7 +7,7 @@ This file tracks what has been achieved in the mobile app, what changed in Flutt
 ## Achieved On Mobile
 
 - Set the app API base URL in `lib/core/api/api_config.dart`.
-- Updated the current API target to `http://192.168.0.156/api/v1`.
+- Updated the current API target to `http://192.168.0.156:8003/api/v1`.
 - Added Firebase support for social authentication.
 - Added Google Sign-In support using the native Google account picker flow.
 - Changed Google login away from Firebase's browser-based generic provider flow.
@@ -35,7 +35,7 @@ Firebase login is working, but dashboard navigation depends on Laravel accepting
 The mobile app currently posts Firebase login data to:
 
 ```text
-POST http://192.168.0.156/api/v1/auth/firebase
+POST http://192.168.0.156:8003/api/v1/auth/firebase
 ```
 
 The tested response from that endpoint was:
@@ -117,7 +117,7 @@ Then the mobile API base URL should be:
 http://192.168.0.156:8003/api/v1
 ```
 
-If the API is served by Apache/Nginx at the root host, then the current mobile API base URL is correct:
+If the API is served by Apache/Nginx at the root host without port `8003`, then update the mobile API base URL back to:
 
 ```text
 http://192.168.0.156/api/v1
@@ -129,3 +129,82 @@ http://192.168.0.156/api/v1
 - The dashboard opens only after Laravel returns a valid app token.
 - If the app remains on the login screen after Google login, check the Laravel response for `/api/v1/auth/firebase`.
 - Current confirmed blocker: `/api/v1/auth/firebase` returned `404 Not Found` on `http://192.168.0.156`.
+
+## 2026-07-01 API Port Update
+
+Mobile was updated to use:
+
+```text
+http://192.168.0.156:8003/api/v1
+```
+
+Reason: the phone showed an HTML `404 Not Found` page from `http://192.168.0.156/api/v1/...`, which means the app was reaching the web/admin host instead of the Laravel API route.
+
+Laravel/backend should confirm that this route exists on port `8003`:
+
+```text
+POST /api/v1/auth/firebase
+```
+
+Mobile also now converts HTML error pages into a clearer message:
+
+```text
+API route not found. Check the Laravel API URL and port.
+```
+## 2026-07-01 Social Profile Completion Implementation
+
+Mobile now fully supports the recommended Google/Apple onboarding flow:
+
+1. User signs in with Google or Apple.
+2. Flutter sends the Firebase ID token to Laravel through `POST /api/v1/auth/firebase`.
+3. Flutter reads Laravel user data.
+4. If `profile_complete` is `false`, Flutter opens the Complete Profile screen.
+5. User fills donor details.
+6. Flutter sends the completed details to `PUT /api/v1/profile`.
+7. Flutter refreshes the current user, then opens the dashboard.
+
+Mobile now reads this field from Laravel when available:
+
+```json
+{
+  "profile_complete": false
+}
+```
+
+Laravel should return `profile_complete` on auth and profile responses. Mobile also supports these aliases as fallback:
+
+```text
+profile_complete
+is_profile_complete
+profileComplete
+donor_profile_complete
+```
+
+The Complete Profile screen now sends these fields to Laravel:
+
+```json
+{
+  "name": "Donor Name",
+  "phone": "+255712000000",
+  "blood_group": "O+",
+  "gender": "male",
+  "region": "Dar es Salaam",
+  "date_of_birth": "1998-01-20",
+  "address": "Optional address",
+  "preferred_center_id": 1,
+  "emergency_contact_name": "Optional contact",
+  "emergency_contact_phone": "+255713000000",
+  "push_notifications_enabled": true,
+  "sms_reminders_enabled": true,
+  "share_anonymized_data": false,
+  "language": "english"
+}
+```
+
+Required for Laravel:
+
+- New Google/Apple users should not be treated as complete donors immediately.
+- If required donor fields are missing, return `profile_complete: false`.
+- After `PUT /api/v1/profile` saves required donor fields, return `profile_complete: true`.
+- `PUT /api/v1/profile` should save user fields and donor profile fields together.
+- `GET /api/v1/profile` or `GET /api/v1/user` should return the same profile completion flag.
