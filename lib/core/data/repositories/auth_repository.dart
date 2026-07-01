@@ -12,9 +12,9 @@ class AuthRepository extends ChangeNotifier {
     required ApiClient api,
     required TokenStore tokens,
     Future<void> Function()? onAuthenticated,
-  })  : _api = api,
-        _tokens = tokens,
-        _onAuthenticated = onAuthenticated;
+  }) : _api = api,
+       _tokens = tokens,
+       _onAuthenticated = onAuthenticated;
 
   final ApiClient _api;
   final TokenStore _tokens;
@@ -64,7 +64,6 @@ class AuthRepository extends ChangeNotifier {
     return _persistFromAuthResponse(response);
   }
 
-
   Future<User> loginWithFirebase({
     required SocialAuthProvider provider,
     required String firebaseIdToken,
@@ -88,8 +87,19 @@ class AuthRepository extends ChangeNotifier {
     );
     return _persistFromAuthResponse(response);
   }
+
   Future<User> fetchCurrentUser() async {
-    final response = await _api.get('/user');
+    dynamic response;
+    try {
+      response = await _api.get('/user');
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) {
+        response = await _api.get('/profile');
+      } else {
+        rethrow;
+      }
+    }
+
     final payload = readObjectPayload(response);
     if (payload == null) {
       throw const ApiException('Unexpected user payload');
@@ -100,12 +110,29 @@ class AuthRepository extends ChangeNotifier {
     return user;
   }
 
+  Future<User?> validateSession() async {
+    if (!isAuthenticated) return null;
+    try {
+      return await fetchCurrentUser();
+    } on ApiException catch (e) {
+      if (e.isUnauthorized) {
+        await clearLocalSession();
+        return null;
+      }
+      rethrow;
+    }
+  }
+
   Future<void> logout() async {
     try {
       await _api.post('/auth/logout');
-    } on ApiException {
+    } catch (_) {
       // Best effort: clear the local session even if logout fails server-side.
     }
+    await clearLocalSession();
+  }
+
+  Future<void> clearLocalSession() async {
     await _tokens.clear();
     _user = null;
     notifyListeners();
@@ -121,10 +148,13 @@ class AuthRepository extends ChangeNotifier {
       throw const ApiException('Auth response did not include a token');
     }
 
-    Map<String, dynamic>? userJson = readObject(response, 'user') ??
+    Map<String, dynamic>? userJson =
+        readObject(response, 'user') ??
         readObject(response, 'profile') ??
+        readObject(response, 'donor') ??
         readObject(data, 'user') ??
-        readObject(data, 'profile');
+        readObject(data, 'profile') ??
+        readObject(data, 'donor');
 
     final wrappedUser = userJson?['data'];
     if (wrappedUser is Map<String, dynamic>) {
@@ -155,7 +185,3 @@ class AuthRepository extends ChangeNotifier {
     ]);
   }
 }
-
-
-
-

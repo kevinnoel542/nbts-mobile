@@ -37,6 +37,12 @@ class FirebaseSocialAuthService {
     }
   }
 
+  static Future<void> signOut() async {
+    await Firebase.initializeApp();
+    await firebase_auth.FirebaseAuth.instance.signOut();
+    await GoogleSignIn().signOut();
+  }
+
   static Future<FirebaseSocialAuthResult?> _signInWithGoogle() async {
     final googleUser = await GoogleSignIn(
       scopes: <String>['email', 'profile'],
@@ -57,11 +63,10 @@ class FirebaseSocialAuthService {
   }
 
   static Future<FirebaseSocialAuthResult?> _signInWithApple() async {
-    final provider = firebase_auth.OAuthProvider(
-      SocialAuthProvider.apple.firebaseProviderId,
-    )
-      ..addScope('email')
-      ..addScope('name');
+    final provider =
+        firebase_auth.OAuthProvider(SocialAuthProvider.apple.firebaseProviderId)
+          ..addScope('email')
+          ..addScope('name');
 
     final userCredential = await firebase_auth.FirebaseAuth.instance
         .signInWithProvider(provider);

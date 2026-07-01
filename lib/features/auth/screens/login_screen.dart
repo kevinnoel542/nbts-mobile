@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final user = await Services.instance.auth.loginWithFirebase(
+      await Services.instance.auth.loginWithFirebase(
         provider: firebaseResult.provider,
         firebaseIdToken: firebaseResult.idToken,
         email: firebaseResult.email,
@@ -55,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
         photoUrl: firebaseResult.photoUrl,
         uid: firebaseResult.uid,
       );
+      final user = await Services.instance.auth.fetchCurrentUser();
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(
         context,
@@ -88,10 +89,13 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       await Services.instance.auth.login(identifier: id, password: pw);
+      final user = await Services.instance.auth.fetchCurrentUser();
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.dashboard,
+        user.isDonorProfileComplete
+            ? AppRoutes.dashboard
+            : AppRoutes.completeProfile,
         (_) => false,
       );
     } on ApiException catch (e) {

@@ -37,13 +37,15 @@ class User {
   final DateTime? nextEligibleDate;
   final bool? profileComplete;
 
+  bool get hasRequiredDonorFields =>
+      _hasText(phone) &&
+      _hasText(bloodGroup) &&
+      _hasText(gender) &&
+      _hasText(region) &&
+      dateOfBirth != null;
+
   bool get isDonorProfileComplete =>
-      profileComplete ??
-      (_hasText(phone) &&
-          _hasText(bloodGroup) &&
-          _hasText(gender) &&
-          _hasText(region) &&
-          dateOfBirth != null);
+      profileComplete == false ? false : hasRequiredDonorFields;
 
   factory User.fromJson(Map<String, dynamic> json) {
     final donorProfile = readObject(json, 'donor_profile');
@@ -52,11 +54,21 @@ class User {
       id: readInt(json, ['id', 'user_id']) ?? 0,
       name: readString(json, ['name', 'full_name', 'display_name']) ?? '',
       email: readString(json, ['email']),
-      phone: readString(json, ['phone', 'phone_number', 'mobile']),
-      bloodGroup: readString(json, ['blood_group', 'blood_type', 'bloodGroup']),
-      gender: readString(json, ['gender', 'sex']),
-      region: readString(json, ['region', 'location', 'city']),
-      dateOfBirth: readDate(json, ['date_of_birth', 'dob', 'birth_date']),
+      phone:
+          readString(json, ['phone', 'phone_number', 'mobile']) ??
+          readString(profile, ['phone', 'phone_number', 'mobile']),
+      bloodGroup:
+          readString(json, ['blood_group', 'blood_type', 'bloodGroup']) ??
+          readString(profile, ['blood_group', 'blood_type', 'bloodGroup']),
+      gender:
+          readString(json, ['gender', 'sex']) ??
+          readString(profile, ['gender', 'sex']),
+      region:
+          readString(json, ['region', 'location', 'city']) ??
+          readString(profile, ['region', 'location', 'city']),
+      dateOfBirth:
+          readDate(json, ['date_of_birth', 'dob', 'birth_date']) ??
+          readDate(profile, ['date_of_birth', 'dob', 'birth_date']),
       donorId:
           readString(json, ['donor_id', 'donorId', 'nbts_id']) ??
           readString(profile, ['donor_id', 'donorId', 'nbts_id']),

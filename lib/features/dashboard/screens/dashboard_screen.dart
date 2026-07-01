@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/appointment.dart';
 import 'package:nbts/core/data/models/article.dart';
@@ -42,12 +43,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return null;
       }
     }();
-    _upcomingFuture =
-        s.appointments.fetchUpcoming().catchError((_) async => null);
-    _campaignsFuture =
-        s.campaigns.fetchAll().catchError((_) async => <Campaign>[]);
-    _articlesFuture =
-        s.articles.fetchAll().catchError((_) async => <Article>[]);
+    _upcomingFuture = s.appointments.fetchUpcoming().catchError(
+      (_) async => null,
+    );
+    _campaignsFuture = s.campaigns.fetchAll().catchError(
+      (_) async => <Campaign>[],
+    );
+    _articlesFuture = s.articles.fetchAll().catchError(
+      (_) async => <Article>[],
+    );
     _eligibilityFuture = () async {
       try {
         return await s.eligibility.fetch();
@@ -100,7 +104,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: Badge.count(
                   count: count,
                   isLabelVisible: count > 0,
-                  child: const Icon(Icons.notifications_outlined),
+                  child: SvgPicture.asset(
+                    'assets/nav/bell.svg',
+                    width: 23,
+                    height: 23,
+                    colorFilter: ColorFilter.mode(
+                      scheme.onSurfaceVariant,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ),
                 onPressed: () async {
                   await Navigator.pushNamed(context, AppRoutes.notifications);
@@ -111,8 +123,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.qr_code_rounded),
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.donorCard),
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.donorCard),
           ),
           const SizedBox(width: 4),
         ],
@@ -150,10 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       },
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    _NextAppointmentCard(
-                      scheme: scheme,
-                      appointment: upcoming,
-                    ),
+                    _NextAppointmentCard(scheme: scheme, appointment: upcoming),
                     const SizedBox(height: AppSpacing.md),
                     _StatsRow(user: user),
                     const SizedBox(height: AppSpacing.xl),
@@ -176,7 +184,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     FutureBuilder<List<Campaign>>(
                       future: _campaignsFuture,
                       builder: (context, campaignSnap) {
-                        final campaigns = campaignSnap.data ?? const <Campaign>[];
+                        final campaigns =
+                            campaignSnap.data ?? const <Campaign>[];
                         if (campaigns.isNotEmpty) {
                           return Column(
                             children: [
@@ -194,7 +203,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         return FutureBuilder<List<Article>>(
                           future: _articlesFuture,
                           builder: (context, articleSnap) {
-                            final articles = articleSnap.data ?? const <Article>[];
+                            final articles =
+                                articleSnap.data ?? const <Article>[];
                             if (articles.isEmpty) {
                               return _ArticlesPlaceholder(scheme: scheme);
                             }
@@ -223,10 +233,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
+
 String _formatDate(DateTime d) {
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   return '${months[d.month - 1]} ${d.day}, ${d.year}';
 }
@@ -287,14 +308,15 @@ class _EligibilityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final nextDate = eligibility?.nextEligibleDate ?? user?.nextEligibleDate;
     final now = DateTime.now();
-    final isEligible = eligibility?.eligible ??
-        (nextDate == null || !nextDate.isAfter(now));
-    final dateText = eligibility?.message ??
+    final isEligible =
+        eligibility?.eligible ?? (nextDate == null || !nextDate.isAfter(now));
+    final dateText =
+        eligibility?.message ??
         (nextDate == null
             ? 'Pending medical verification'
             : isEligible
-                ? 'Eligible to donate'
-                : 'Next eligible: ${_formatDate(nextDate)}');
+            ? 'Eligible to donate'
+            : 'Next eligible: ${_formatDate(nextDate)}');
 
     return AppCard(
       child: Column(
@@ -332,10 +354,8 @@ class _EligibilityCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    AppRoutes.bookAppointment,
-                  ),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.bookAppointment),
                   icon: const Icon(Icons.calendar_today_rounded, size: 18),
                   label: const Text('Book donation'),
                 ),
@@ -494,9 +514,7 @@ class _CampaignTile extends StatelessWidget {
               borderRadius: AppRadius.chip,
             ),
             child: Icon(
-              isUrgent
-                  ? Icons.campaign_rounded
-                  : Icons.local_hospital_outlined,
+              isUrgent ? Icons.campaign_rounded : Icons.local_hospital_outlined,
               size: 20,
               color: isUrgent ? AppStatus.warning : scheme.onSurface,
             ),
@@ -541,10 +559,7 @@ class _CampaignTile extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: scheme.onSurfaceVariant,
-          ),
+          Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
         ],
       ),
     );
@@ -619,15 +634,13 @@ class _ArticleTile extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: scheme.onSurfaceVariant,
-          ),
+          Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
         ],
       ),
     );
   }
 }
+
 class _ArticlesPlaceholder extends StatelessWidget {
   const _ArticlesPlaceholder({required this.scheme});
 
@@ -648,10 +661,7 @@ class _ArticlesPlaceholder extends StatelessWidget {
           Expanded(
             child: Text(
               'No campaigns or articles available right now.',
-              style: TextStyle(
-                color: scheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
             ),
           ),
         ],
@@ -659,7 +669,6 @@ class _ArticlesPlaceholder extends StatelessWidget {
     );
   }
 }
-
 
 class _UrgentRequestBanner extends StatelessWidget {
   const _UrgentRequestBanner();
@@ -690,10 +699,7 @@ class _UrgentRequestBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const StatusPill(
-                  label: 'Urgent',
-                  kind: StatusKind.warning,
-                ),
+                const StatusPill(label: 'Urgent', kind: StatusKind.warning),
                 const SizedBox(height: 6),
                 Text(
                   'Awaiting NBTS urgent request feed',
@@ -718,10 +724,7 @@ class _UrgentRequestBanner extends StatelessWidget {
 }
 
 class _NextAppointmentCard extends StatelessWidget {
-  const _NextAppointmentCard({
-    required this.scheme,
-    required this.appointment,
-  });
+  const _NextAppointmentCard({required this.scheme, required this.appointment});
 
   final ColorScheme scheme;
   final Appointment? appointment;
@@ -732,8 +735,8 @@ class _NextAppointmentCard extends StatelessWidget {
     final label = next == null
         ? 'No upcoming appointment'
         : next.scheduledAt != null
-            ? _formatDateTime(next.scheduledAt!)
-            : (next.centerName ?? 'Scheduled');
+        ? _formatDateTime(next.scheduledAt!)
+        : (next.centerName ?? 'Scheduled');
     return AppCard(
       child: Row(
         children: [
@@ -855,20 +858,13 @@ class _ImpactCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Donations toward the next loyalty tier.',
-            style: TextStyle(
-              color: scheme.onSurfaceVariant,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
           ),
         ],
       ),
     );
   }
 }
-
-
-
-
 
 void _showForYouSheet(
   BuildContext context,
@@ -879,9 +875,10 @@ void _showForYouSheet(
     context: context,
     showDragHandle: true,
     builder: (context) => FutureBuilder<List<Object>>(
-      future: Future.wait([campaignsFuture, articlesFuture]).then(
-        (lists) => [...lists[0], ...lists[1]],
-      ),
+      future: Future.wait([
+        campaignsFuture,
+        articlesFuture,
+      ]).then((lists) => [...lists[0], ...lists[1]]),
       builder: (context, snapshot) {
         final items = snapshot.data ?? const <Object>[];
         return ListView(
@@ -895,9 +892,9 @@ void _showForYouSheet(
           children: [
             Text(
               'For you',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: AppSpacing.md),
             if (items.isEmpty)
@@ -906,9 +903,13 @@ void _showForYouSheet(
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(
-                  item is Campaign ? Icons.campaign_outlined : Icons.article_outlined,
+                  item is Campaign
+                      ? Icons.campaign_outlined
+                      : Icons.article_outlined,
                 ),
-                title: Text(item is Campaign ? item.title : (item as Article).title),
+                title: Text(
+                  item is Campaign ? item.title : (item as Article).title,
+                ),
                 subtitle: Text(
                   item is Campaign
                       ? (item.summary ?? 'Campaign update')
@@ -978,9 +979,9 @@ void _showDetailSheet(
           const SizedBox(height: AppSpacing.md),
           Text(
             title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(body),
@@ -997,4 +998,3 @@ void _showDetailSheet(
     ),
   );
 }
-

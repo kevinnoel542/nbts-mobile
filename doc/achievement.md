@@ -197,7 +197,7 @@ The Complete Profile screen now sends these fields to Laravel:
   "push_notifications_enabled": true,
   "sms_reminders_enabled": true,
   "share_anonymized_data": false,
-  "language": "english"
+  "language": "en"
 }
 ```
 
@@ -208,3 +208,39 @@ Required for Laravel:
 - After `PUT /api/v1/profile` saves required donor fields, return `profile_complete: true`.
 - `PUT /api/v1/profile` should save user fields and donor profile fields together.
 - `GET /api/v1/profile` or `GET /api/v1/user` should return the same profile completion flag.
+
+## 2026-07-01 Dashboard Access Guard Update
+
+Mobile was tightened so a social login user cannot reach the dashboard just because Laravel returns an auth token.
+
+New mobile rule:
+
+- If `profile_complete` is `false`, open Complete Profile.
+- If `profile_complete` is `true` but required donor fields are missing, still open Complete Profile.
+- If `profile_complete` is missing, Flutter checks required donor fields directly.
+
+Required donor fields checked by Flutter:
+
+```text
+phone
+blood_group
+gender
+region
+date_of_birth
+```
+
+After Google/Apple Firebase login, Flutter now calls Laravel auth first, then fetches the fresh current user/profile before choosing dashboard or Complete Profile.
+
+Laravel should not auto-mark newly created Google/Apple users as complete. A deleted/new Google account should be created as an incomplete donor until `PUT /api/v1/profile` saves the required donor fields.
+
+
+## 2026-07-01 Language Validation Fix
+
+Mobile now sends language as Laravel-friendly short codes:
+
+`	ext
+English -> en
+Swahili -> sw
+` 
+
+This fixes Laravel validation errors such as The selected language is invalid. during PUT /api/v1/profile.

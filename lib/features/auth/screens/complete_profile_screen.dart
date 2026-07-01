@@ -4,6 +4,7 @@ import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/donation_center.dart';
 import 'package:nbts/core/routes/app_routes.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
+import 'package:nbts/features/auth/services/firebase_social_auth_service.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
   const CompleteProfileScreen({super.key});
@@ -107,6 +108,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     return null;
   }
 
+  String get _languageCode => _language == 'Swahili' ? 'sw' : 'en';
+
   String? _err(String field) {
     final list = _fieldErrors?[field];
     if (list == null || list.isEmpty) return null;
@@ -126,6 +129,18 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       helpText: 'Date of birth',
     );
     if (picked != null) setState(() => _dateOfBirth = picked);
+  }
+
+  Future<void> _useAnotherAccount() async {
+    setState(() => _submitting = true);
+    await Services.instance.auth.clearLocalSession();
+    try {
+      await FirebaseSocialAuthService.signOut();
+    } catch (_) {
+      // Returning to sign-in should still work if Firebase sign-out fails.
+    }
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
   }
 
   Future<void> _submit() async {
@@ -165,7 +180,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         'push_notifications_enabled': _pushNotifications,
         'sms_reminders_enabled': _smsReminders,
         'share_anonymized_data': _shareAnonymizedData,
-        'language': _language.toLowerCase(),
+        'language': _languageCode,
       });
       await Services.instance.auth.fetchCurrentUser();
       if (!mounted) return;
@@ -176,6 +191,16 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       );
     } on ApiException catch (e) {
       if (!mounted) return;
+      if (e.isUnauthorized) {
+        await Services.instance.auth.clearLocalSession();
+        if (!mounted) return;
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.welcome,
+          (_) => false,
+        );
+        return;
+      }
       setState(() {
         _fieldErrors = e.errors;
         _formError = e.errors == null ? e.message : e.firstError();
@@ -196,6 +221,13 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Complete profile'),
+        actions: [
+          TextButton(
+            onPressed: _submitting ? null : _useAnotherAccount,
+            child: const Text('Sign out'),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: Form(
@@ -472,6 +504,14 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2.4),
                       )
                     : const Text('Save and continue'),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Center(
+                child: TextButton.icon(
+                  onPressed: _submitting ? null : _useAnotherAccount,
+                  icon: const Icon(Icons.swap_horiz_rounded),
+                  label: const Text('Use another account'),
+                ),
               ),
             ],
           ),

@@ -8,6 +8,7 @@ import 'package:nbts/core/theme/theme_controller.dart';
 import 'package:nbts/core/widgets/app_card.dart';
 import 'package:nbts/core/widgets/empty_state.dart';
 import 'package:nbts/core/widgets/section_header.dart';
+import 'package:nbts/features/auth/services/firebase_social_auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -38,6 +39,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _signOut() async {
     await Services.instance.auth.logout();
+    try {
+      await FirebaseSocialAuthService.signOut();
+    } catch (_) {
+      // Local Laravel sign-out should still complete even if Firebase is unavailable.
+    }
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, AppRoutes.welcome, (_) => false);
   }
@@ -46,14 +52,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await Services.instance.profile.update({key: value});
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preference updated.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Preference updated.')));
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.firstError())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.firstError())));
     }
   }
 
@@ -82,9 +88,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: AppSpacing.md),
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(message),
@@ -116,7 +122,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () => _showInfoSheet(
               title: 'Edit profile',
               icon: Icons.edit_outlined,
-              message: 'Use the account rows below to review your donor card, medical summary, emergency contact, and preferences.',
+              message:
+                  'Use the account rows below to review your donor card, medical summary, emergency contact, and preferences.',
             ),
           ),
           const SizedBox(width: 4),
@@ -170,10 +177,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _Row(
                         icon: Icons.qr_code_rounded,
                         label: 'Donor card',
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          AppRoutes.donorCard,
-                        ),
+                        onTap: () =>
+                            Navigator.pushNamed(context, AppRoutes.donorCard),
                       ),
                       _Divider(scheme: scheme),
                       _Row(
@@ -182,7 +187,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () => _showInfoSheet(
                           title: 'Medical summary',
                           icon: Icons.monitor_heart_outlined,
-                          message: 'Your blood group, eligibility, donation count, and next eligible date are shown across the home, donor card, and history screens.',
+                          message:
+                              'Your blood group, eligibility, donation count, and next eligible date are shown across the home, donor card, and history screens.',
                           actionLabel: 'View donor card',
                           onAction: () {
                             Navigator.pop(context);
@@ -197,7 +203,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () => _showInfoSheet(
                           title: 'Emergency contact',
                           icon: Icons.contact_emergency_outlined,
-                          message: 'Emergency contact editing is stored on the backend profile endpoint. Ask staff to verify this information before donation day.',
+                          message:
+                              'Emergency contact editing is stored on the backend profile endpoint. Ask staff to verify this information before donation day.',
                         ),
                       ),
                     ],
@@ -277,7 +284,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ButtonSegment(value: 'Swahili', label: Text('Swahili')),
                   ],
                   selected: {_language},
-                  onSelectionChanged: (v) => setState(() => _language = v.first),
+                  onSelectionChanged: (v) =>
+                      setState(() => _language = v.first),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 const SectionHeader('Support'),
@@ -291,7 +299,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () => _showInfoSheet(
                           title: 'FAQ and donor guide',
                           icon: Icons.help_outline_rounded,
-                          message: 'Bring a valid ID, eat before donating, drink water, and tell NBTS staff about medication or recent illness before donation.',
+                          message:
+                              'Bring a valid ID, eat before donating, drink water, and tell NBTS staff about medication or recent illness before donation.',
                         ),
                       ),
                       _Divider(scheme: scheme),
@@ -301,7 +310,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () => _showInfoSheet(
                           title: 'Contact NBTS support',
                           icon: Icons.chat_bubble_outline_rounded,
-                          message: 'For urgent appointment or donor record support, contact your nearest NBTS center or use the center list in the app.',
+                          message:
+                              'For urgent appointment or donor record support, contact your nearest NBTS center or use the center list in the app.',
                           actionLabel: 'Find centers',
                           onAction: () {
                             Navigator.pop(context);
@@ -316,7 +326,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () => _showInfoSheet(
                           title: 'Account and privacy',
                           icon: Icons.privacy_tip_outlined,
-                          message: 'Your donor profile is used for eligibility, appointment reminders, donation history, and NBTS planning. You can sign out from this screen any time.',
+                          message:
+                              'Your donor profile is used for eligibility, appointment reminders, donation history, and NBTS planning. You can sign out from this screen any time.',
                         ),
                       ),
                     ],
@@ -466,11 +477,7 @@ class _Metric extends StatelessWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+  const _Row({required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
   final String label;
@@ -504,6 +511,3 @@ class _Divider extends StatelessWidget {
     return Divider(height: 1, thickness: 1, color: scheme.outlineVariant);
   }
 }
-
-
-

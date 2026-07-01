@@ -80,14 +80,11 @@ class _SplashScreenState extends State<SplashScreen>
 
     var route = AppRoutes.welcome;
     if (Services.instance.tokens.isAuthenticated) {
-      route = AppRoutes.dashboard;
-      try {
-        final user = await Services.instance.profile.fetch();
-        if (!user.isDonorProfileComplete) {
-          route = AppRoutes.completeProfile;
-        }
-      } catch (_) {
-        route = AppRoutes.dashboard;
+      final user = await Services.instance.auth.validateSession();
+      if (user != null) {
+        route = user.isDonorProfileComplete
+            ? AppRoutes.dashboard
+            : AppRoutes.completeProfile;
       }
     }
     if (!mounted) return;

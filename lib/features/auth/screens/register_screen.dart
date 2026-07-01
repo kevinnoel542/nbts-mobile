@@ -94,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final user = await Services.instance.auth.loginWithFirebase(
+      await Services.instance.auth.loginWithFirebase(
         provider: firebaseResult.provider,
         firebaseIdToken: firebaseResult.idToken,
         email: firebaseResult.email,
@@ -102,6 +102,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         photoUrl: firebaseResult.photoUrl,
         uid: firebaseResult.uid,
       );
+      final user = await Services.instance.auth.fetchCurrentUser();
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(
         context,
@@ -176,10 +177,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         region: _region!,
         dateOfBirth: _formatDob(_dateOfBirth!),
       );
+      final user = await Services.instance.auth.fetchCurrentUser();
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.dashboard,
+        user.isDonorProfileComplete
+            ? AppRoutes.dashboard
+            : AppRoutes.completeProfile,
         (_) => false,
       );
     } on ApiException catch (e) {

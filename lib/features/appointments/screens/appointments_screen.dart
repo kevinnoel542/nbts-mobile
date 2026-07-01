@@ -27,7 +27,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   }
 
   void _load() {
-    _upcomingFuture = Services.instance.appointments.fetchUpcoming();
+    _upcomingFuture = Services.instance.appointments.fetchUpcoming().catchError(
+      (_) async => null,
+    );
     _appointmentsFuture = Services.instance.appointments.fetchAll();
   }
 
@@ -35,6 +37,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     setState(_load);
     await Future.wait([_upcomingFuture, _appointmentsFuture]);
   }
+
   Future<void> _reschedule(Appointment appointment) async {
     final changed = await Navigator.pushNamed(
       context,
@@ -69,15 +72,15 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     try {
       await Services.instance.appointments.cancel(appointment.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Appointment cancelled.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Appointment cancelled.')));
       await _refresh();
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.firstError())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.firstError())));
     }
   }
 
@@ -212,10 +215,7 @@ class _UpcomingCard extends StatelessWidget {
               const Expanded(
                 child: Text(
                   'Confirmed',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                 ),
               ),
               StatusPill(
@@ -331,14 +331,8 @@ class _AppointmentCard extends StatelessWidget {
               if (value == 'cancel') onCancel();
             },
             itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'reschedule',
-                child: Text('Reschedule'),
-              ),
-              PopupMenuItem(
-                value: 'cancel',
-                child: Text('Cancel'),
-              ),
+              PopupMenuItem(value: 'reschedule', child: Text('Reschedule')),
+              PopupMenuItem(value: 'cancel', child: Text('Cancel')),
             ],
             child: StatusPill(
               label: _text(appointment.status, fallback: 'Booked'),
@@ -359,8 +353,18 @@ String _text(String? value, {required String fallback}) {
 String _formatDateTime(DateTime? date) {
   if (date == null) return 'Date pending';
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final hh = date.hour.toString().padLeft(2, '0');
   final mm = date.minute.toString().padLeft(2, '0');

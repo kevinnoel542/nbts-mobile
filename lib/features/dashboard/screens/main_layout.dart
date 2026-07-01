@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:nbts/core/api/service_locator.dart';
+import 'package:nbts/core/routes/app_routes.dart';
 import 'package:nbts/features/appointments/screens/appointments_screen.dart';
 import 'package:nbts/features/dashboard/screens/dashboard_screen.dart';
 import 'package:nbts/features/donate/screens/find_centers_screen.dart';
@@ -15,6 +17,7 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _index = 0;
+  int _previousIndex = 0;
 
   static const _pages = <Widget>[
     DashboardScreen(),
@@ -25,17 +28,74 @@ class _MainLayoutState extends State<MainLayout> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _ensureAuthorized();
+  }
+
+  Future<void> _ensureAuthorized() async {
+    try {
+      final user = await Services.instance.auth.validateSession();
+      if (!mounted) return;
+      if (user == null) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.welcome,
+          (_) => false,
+        );
+        return;
+      }
+      if (!user.isDonorProfileComplete) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.completeProfile,
+          (_) => false,
+        );
+      }
+    } catch (_) {
+      // Keep the current page during temporary network/server errors.
+    }
+  }
+
+  void _selectDestination(int index) {
+    if (index == _index) return;
+    setState(() {
+      _previousIndex = _index;
+      _index = index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      body: IndexedStack(index: _index, children: _pages),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 280),
+        reverseDuration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          final forward = _index >= _previousIndex;
+          final beginOffset = Offset(forward ? 0.08 : -0.08, 0);
+          final slide = Tween<Offset>(
+            begin: beginOffset,
+            end: Offset.zero,
+          ).animate(animation);
+
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(position: slide, child: child),
+          );
+        },
+        child: KeyedSubtree(key: ValueKey<int>(_index), child: _pages[_index]),
+      ),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(top: BorderSide(color: scheme.outlineVariant)),
         ),
         child: NavigationBar(
           selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
+          onDestinationSelected: _selectDestination,
           destinations: const [
             NavigationDestination(
               icon: _NavIcon('assets/nav/home.svg'),
