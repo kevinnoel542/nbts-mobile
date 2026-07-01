@@ -20,31 +20,52 @@ class InfoRow extends StatelessWidget {
     final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 18, color: scheme.onSurfaceVariant),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(icon, size: 18, color: scheme.onSurfaceVariant),
+            ),
             const SizedBox(width: 12),
           ],
           Expanded(
-            child: Text(
-              label,
-              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 14),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: scheme.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: scheme.onSurface,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    height: 1.25,
+                  ),
+                ),
+              ],
             ),
           ),
           if (onTap != null) ...[
             const SizedBox(width: 6),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 18,
-              color: scheme.onSurfaceVariant,
+            Padding(
+              padding: const EdgeInsets.only(top: 11),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ],
         ],

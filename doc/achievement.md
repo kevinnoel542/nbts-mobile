@@ -264,3 +264,74 @@ email: nullable, email, unique users email rule
 ```
 
 Login already supports `identifier`, so users can sign in using either phone number or email.
+
+## 2026-07-01 Centers UI Detail Update
+
+Mobile now shows richer donation center cards when Laravel provides the data.
+
+Flutter displays these center fields from the centers API:
+
+```text
+name
+address
+phone
+opening_hours / hours / working_hours / open_hours
+services / service_list
+is_open / open / status_open
+distance_km
+wait_time / estimated_wait
+capacity_label / capacity / availability
+```
+
+The Centers screen no longer opens booking by tapping the whole card silently. It now shows a clear `Book here` button on each center card.
+
+Laravel should make sure the centers endpoint returns useful values for:
+
+- phone
+- opening hours
+- services
+- open/closed status
+- address
+
+
+## 2026-07-01 Dynamic Appointment Slots
+
+Mobile booking now supports Laravel-controlled appointment times.
+
+Flutter now calls this endpoint after the donor selects a center and date:
+
+```text
+GET /api/v1/appointments/slots?center_id=1&date=2026-07-01
+```
+
+Expected Laravel response:
+
+```json
+[
+  {
+    "time": "08:00",
+    "available": true
+  },
+  {
+    "time": "09:30",
+    "available": false,
+    "reason": "Full"
+  },
+  {
+    "time": "11:00",
+    "available": false,
+    "reason": "Center closed"
+  }
+]
+```
+
+Flutter supports these slot field aliases:
+
+```text
+time / slot_time / starts_at / start_time / scheduled_time
+available / is_available / open
+reason / message / status_label
+```
+
+If Laravel has not added the endpoint yet, Flutter falls back to standard times so the app does not break. Laravel should still do the final availability check inside `POST /api/v1/appointments` and `PUT /api/v1/appointments/{id}` because a slot can become full while the donor is on the booking screen.
+

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/appointment.dart';
+import 'package:nbts/core/data/models/appointment_slot.dart';
 import 'package:nbts/core/data/models/donation_center.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
 import 'package:nbts/core/widgets/app_card.dart';
@@ -15,18 +16,19 @@ class BookAppointmentScreen extends StatefulWidget {
 }
 
 class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
-  static const _slots = [
-    TimeOfDay(hour: 8, minute: 0),
-    TimeOfDay(hour: 9, minute: 30),
-    TimeOfDay(hour: 11, minute: 0),
-    TimeOfDay(hour: 13, minute: 0),
-    TimeOfDay(hour: 14, minute: 30),
-    TimeOfDay(hour: 16, minute: 0),
+  static const _fallbackSlots = [
+    AppointmentSlot(time: TimeOfDay(hour: 8, minute: 0)),
+    AppointmentSlot(time: TimeOfDay(hour: 9, minute: 30)),
+    AppointmentSlot(time: TimeOfDay(hour: 11, minute: 0)),
+    AppointmentSlot(time: TimeOfDay(hour: 13, minute: 0)),
+    AppointmentSlot(time: TimeOfDay(hour: 14, minute: 30)),
+    AppointmentSlot(time: TimeOfDay(hour: 16, minute: 0)),
   ];
 
   DonationCenter? _selectedCenter;
   DateTime? _selectedDate;
-  int? _selectedSlot;
+  AppointmentSlot? _selectedSlot;
+  Future<_SlotOptions>? _slotsFuture;
   Appointment? _rescheduleAppointment;
   bool _readArgs = false;
   bool _submitting = false;
@@ -61,12 +63,13 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
           scheduledAt.month,
           scheduledAt.day,
         );
-        final slotIndex = _slots.indexWhere((slot) =>
-            slot.hour == scheduledAt.hour && slot.minute == scheduledAt.minute);
-        if (slotIndex >= 0) _selectedSlot = slotIndex;
+        _selectedSlot = AppointmentSlot(
+          time: TimeOfDay(hour: scheduledAt.hour, minute: scheduledAt.minute),
+        );
       }
     }
     _readArgs = true;
+    _reloadSlots();
   }
 
   Future<void> _refreshCenters() async {
@@ -76,22 +79,72 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     await _centersFuture;
   }
 
+  void _handleCenterChanged(DonationCenter? center) {
+    setState(() {
+      _selectedCenter = center;
+      _selectedSlot = null;
+      _formError = null;
+      _reloadSlots();
+    });
+  }
+
+  void _handleDateChanged(DateTime date) {
+    setState(() {
+      _selectedDate = date;
+      _selectedSlot = null;
+      _formError = null;
+      _reloadSlots();
+    });
+  }
+
+  void _reloadSlots() {
+    final center = _selectedCenter;
+    final date = _selectedDate;
+    if (center == null || date == null) {
+      _slotsFuture = null;
+      return;
+    }
+    _slotsFuture = _fetchSlots(center: center, date: date);
+  }
+
+  Future<_SlotOptions> _fetchSlots({
+    required DonationCenter center,
+    required DateTime date,
+  }) async {
+    try {
+      final slots = await Services.instance.appointments.fetchSlots(
+        centerId: center.id,
+        date: date,
+      );
+      if (slots.isEmpty) return const _SlotOptions.fallback();
+      return _SlotOptions(slots: slots, usingFallback: false);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) {
+        return const _SlotOptions.fallback();
+      }
+      rethrow;
+    }
+  }
+
   Future<void> _submit() async {
     final center = _selectedCenter;
     final date = _selectedDate;
-    final slotIndex = _selectedSlot;
-    if (center == null || date == null || slotIndex == null) {
+    final slot = _selectedSlot;
+    if (center == null || date == null || slot == null) {
       setState(() => _formError = 'Choose a center, date, and time.');
       return;
     }
+    if (!slot.available) {
+      setState(() => _formError = slot.reason ?? 'This time is not available.');
+      return;
+    }
 
-    final slot = _slots[slotIndex];
     final scheduledAt = DateTime(
       date.year,
       date.month,
       date.day,
-      slot.hour,
-      slot.minute,
+      slot.time.hour,
+      slot.time.minute,
     );
 
     setState(() {
@@ -115,9 +168,13 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_rescheduleAppointment == null
-            ? 'Appointment booked.'
-            : 'Appointment rescheduled.')),
+        SnackBar(
+          content: Text(
+            _rescheduleAppointment == null
+                ? 'Appointment booked.'
+                : 'Appointment rescheduled.',
+          ),
+        ),
       );
       Navigator.pop(context, true);
     } on ApiException catch (e) {
@@ -125,9 +182,11 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       setState(() => _formError = e.firstError());
     } catch (_) {
       if (!mounted) return;
-      setState(() => _formError = _rescheduleAppointment == null
-          ? 'Could not book appointment.'
-          : 'Could not reschedule appointment.');
+      setState(
+        () => _formError = _rescheduleAppointment == null
+            ? 'Could not book appointment.'
+            : 'Could not reschedule appointment.',
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -136,16 +195,20 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final canConfirm = _selectedCenter != null &&
+    final canConfirm =
+        _selectedCenter != null &&
         _selectedDate != null &&
         _selectedSlot != null &&
+        _selectedSlot!.available &&
         !_submitting;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_rescheduleAppointment == null
-            ? 'Book donation'
-            : 'Reschedule donation'),
+        title: Text(
+          _rescheduleAppointment == null
+              ? 'Book donation'
+              : 'Reschedule donation',
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
@@ -162,7 +225,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
             centersFuture: _centersFuture,
             submitting: _submitting,
             onRefresh: _refreshCenters,
-            onChanged: (center) => setState(() => _selectedCenter = center),
+            onChanged: _handleCenterChanged,
           ),
           const SizedBox(height: AppSpacing.xl),
           const _Step(number: '2', title: 'Date'),
@@ -170,14 +233,17 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
           _DatePickerStrip(
             selectedDate: _selectedDate,
             submitting: _submitting,
-            onChanged: (date) => setState(() => _selectedDate = date),
+            onChanged: _handleDateChanged,
           ),
           const SizedBox(height: AppSpacing.xl),
           const _Step(number: '3', title: 'Time'),
           const SizedBox(height: AppSpacing.sm),
-          _SlotGrid(
+          _SlotSection(
+            slotsFuture: _slotsFuture,
             selectedSlot: _selectedSlot,
             submitting: _submitting,
+            hasCenterAndDate: _selectedCenter != null && _selectedDate != null,
+            onRetry: () => setState(_reloadSlots),
             onChanged: (slot) => setState(() => _selectedSlot = slot),
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -239,9 +305,13 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2.4),
                   )
-                : Text(_rescheduleAppointment == null
-                    ? 'Confirm appointment'
-                    : 'Save appointment'),
+                : Text(
+                    _selectedSlot == null
+                        ? 'Select a time'
+                        : _rescheduleAppointment == null
+                        ? 'Confirm appointment'
+                        : 'Save appointment',
+                  ),
           ),
         ],
       ),
@@ -396,59 +466,76 @@ class _DatePickerStrip extends StatelessWidget {
     final today = DateTime.now();
     final days = List.generate(
       7,
-      (i) => DateTime(today.year, today.month, today.day).add(
-        Duration(days: i),
-      ),
+      (i) =>
+          DateTime(today.year, today.month, today.day).add(Duration(days: i)),
     );
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var i = 0; i < days.length; i++)
-          Expanded(
-            child: GestureDetector(
-              onTap: submitting ? null : () => onChanged(days[i]),
-              child: Container(
-                margin: EdgeInsets.only(right: i == days.length - 1 ? 0 : 6),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _sameDay(selectedDate, days[i])
-                      ? scheme.primary
-                      : scheme.surfaceContainer,
-                  borderRadius: AppRadius.chip,
-                  border: Border.all(
-                    color: _sameDay(selectedDate, days[i])
-                        ? scheme.primary
-                        : scheme.outlineVariant,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      _weekday(days[i]),
-                      style: TextStyle(
-                        color: _sameDay(selectedDate, days[i])
-                            ? scheme.onPrimary
-                            : scheme.onSurfaceVariant,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${days[i].day}',
-                      style: TextStyle(
-                        color: _sameDay(selectedDate, days[i])
-                            ? scheme.onPrimary
-                            : scheme.onSurface,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: Text(
+            _monthLabel(days.first),
+            style: TextStyle(
+              color: scheme.onSurfaceVariant,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
           ),
+        ),
+        Row(
+          children: [
+            for (var i = 0; i < days.length; i++)
+              Expanded(
+                child: GestureDetector(
+                  onTap: submitting ? null : () => onChanged(days[i]),
+                  child: Container(
+                    margin: EdgeInsets.only(
+                      right: i == days.length - 1 ? 0 : 6,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _sameDay(selectedDate, days[i])
+                          ? scheme.primary
+                          : scheme.surfaceContainer,
+                      borderRadius: AppRadius.chip,
+                      border: Border.all(
+                        color: _sameDay(selectedDate, days[i])
+                            ? scheme.primary
+                            : scheme.outlineVariant,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          _weekday(days[i]),
+                          style: TextStyle(
+                            color: _sameDay(selectedDate, days[i])
+                                ? scheme.onPrimary
+                                : scheme.onSurfaceVariant,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${days[i].day}',
+                          style: TextStyle(
+                            color: _sameDay(selectedDate, days[i])
+                                ? scheme.onPrimary
+                                : scheme.onSurface,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -461,18 +548,151 @@ class _DatePickerStrip extends StatelessWidget {
     const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return labels[d.weekday - 1];
   }
+
+  static String _monthLabel(DateTime date) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+}
+
+class _SlotSection extends StatelessWidget {
+  const _SlotSection({
+    required this.slotsFuture,
+    required this.selectedSlot,
+    required this.submitting,
+    required this.hasCenterAndDate,
+    required this.onRetry,
+    required this.onChanged,
+  });
+
+  final Future<_SlotOptions>? slotsFuture;
+  final AppointmentSlot? selectedSlot;
+  final bool submitting;
+  final bool hasCenterAndDate;
+  final VoidCallback onRetry;
+  final ValueChanged<AppointmentSlot> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final future = slotsFuture;
+    if (!hasCenterAndDate || future == null) {
+      return const _SlotMessage(
+        icon: Icons.schedule_outlined,
+        message: 'Choose a center and date to see available times.',
+      );
+    }
+
+    return FutureBuilder<_SlotOptions>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const AppCard(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          final message = snapshot.error is ApiException
+              ? (snapshot.error as ApiException).message
+              : 'Could not load available times.';
+          return AppCard(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              children: [
+                EmptyState(
+                  icon: Icons.event_busy_outlined,
+                  title: 'Times unavailable',
+                  message: message,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                OutlinedButton.icon(
+                  onPressed: submitting ? null : onRetry,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final options = snapshot.data ?? const _SlotOptions.fallback();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (options.usingFallback) ...[
+              const _SlotMessage(
+                icon: Icons.info_outline_rounded,
+                message:
+                    'Showing standard times until this center sends live availability.',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+            _SlotGrid(
+              slots: options.slots,
+              selectedSlot: selectedSlot,
+              submitting: submitting,
+              onChanged: onChanged,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SlotMessage extends StatelessWidget {
+  const _SlotMessage({required this.icon, required this.message});
+
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Icon(icon, color: scheme.onSurfaceVariant, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SlotGrid extends StatelessWidget {
   const _SlotGrid({
+    required this.slots,
     required this.selectedSlot,
     required this.submitting,
     required this.onChanged,
   });
 
-  final int? selectedSlot;
+  final List<AppointmentSlot> slots;
+  final AppointmentSlot? selectedSlot;
   final bool submitting;
-  final ValueChanged<int> onChanged;
+  final ValueChanged<AppointmentSlot> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -484,38 +704,89 @@ class _SlotGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
-      childAspectRatio: 2.2,
-      children: List.generate(_BookAppointmentScreenState._slots.length, (i) {
-        final selected = selectedSlot == i;
-        return GestureDetector(
-          onTap: submitting ? null : () => onChanged(i),
-          child: Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: selected ? scheme.primary : scheme.surfaceContainer,
-              borderRadius: AppRadius.chip,
-              border: Border.all(
-                color: selected ? scheme.primary : scheme.outlineVariant,
-              ),
-            ),
-            child: Text(
-              _formatTime(_BookAppointmentScreenState._slots[i]),
-              style: TextStyle(
-                color: selected ? scheme.onPrimary : scheme.onSurface,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+      childAspectRatio: 2.05,
+      children: [
+        for (final slot in slots)
+          _SlotButton(
+            slot: slot,
+            selected: selectedSlot?.value == slot.value,
+            submitting: submitting,
+            scheme: scheme,
+            onTap: () => onChanged(slot),
           ),
-        );
-      }),
+      ],
     );
   }
+}
 
-  static String _formatTime(TimeOfDay time) {
-    final hh = time.hour.toString().padLeft(2, '0');
-    final mm = time.minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
+class _SlotButton extends StatelessWidget {
+  const _SlotButton({
+    required this.slot,
+    required this.selected,
+    required this.submitting,
+    required this.scheme,
+    required this.onTap,
+  });
+
+  final AppointmentSlot slot;
+  final bool selected;
+  final bool submitting;
+  final ColorScheme scheme;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = submitting || !slot.available;
+    final foreground = selected
+        ? scheme.onPrimary
+        : disabled
+        ? scheme.onSurfaceVariant.withValues(alpha: 0.55)
+        : scheme.onSurface;
+
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: selected
+              ? scheme.primary
+              : disabled
+              ? scheme.surfaceContainer.withValues(alpha: 0.55)
+              : scheme.surfaceContainer,
+          borderRadius: AppRadius.chip,
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              slot.value,
+              style: TextStyle(
+                color: foreground,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (!slot.available && slot.reason != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                slot.reason!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -560,4 +831,15 @@ class _Step extends StatelessWidget {
       ],
     );
   }
+}
+
+class _SlotOptions {
+  const _SlotOptions({required this.slots, required this.usingFallback});
+
+  const _SlotOptions.fallback()
+    : slots = _BookAppointmentScreenState._fallbackSlots,
+      usingFallback = true;
+
+  final List<AppointmentSlot> slots;
+  final bool usingFallback;
 }

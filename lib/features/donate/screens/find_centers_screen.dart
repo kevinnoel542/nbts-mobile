@@ -136,9 +136,13 @@ class _FindCentersScreenState extends State<FindCentersScreen> {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return centers;
     return centers
-        .where((c) =>
-            c.name.toLowerCase().contains(q) ||
-            (c.address ?? '').toLowerCase().contains(q))
+        .where(
+          (c) =>
+              c.name.toLowerCase().contains(q) ||
+              (c.address ?? '').toLowerCase().contains(q) ||
+              (c.phone ?? '').toLowerCase().contains(q) ||
+              c.services.any((service) => service.toLowerCase().contains(q)),
+        )
         .toList();
   }
 }
@@ -172,74 +176,112 @@ class _CenterTile extends StatelessWidget {
 
   final DonationCenter center;
 
+  void _bookHere(BuildContext context) {
+    Navigator.pushNamed(context, AppRoutes.bookAppointment, arguments: center);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isClosed = center.isOpen == false;
+    final services = center.services.take(3).toList();
+    final capacity = center.waitTime ?? center.capacityLabel;
 
     return AppCard(
-      onTap: () => Navigator.pushNamed(
-        context,
-        AppRoutes.bookAppointment,
-        arguments: center,
-      ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  center.name,
-                  style: TextStyle(
-                    color: scheme.onSurface,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.2,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      center.name,
+                      style: TextStyle(
+                        color: scheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _Detail(
+                      icon: Icons.place_outlined,
+                      label: center.address ?? 'Address pending',
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: AppSpacing.sm),
               StatusPill(
                 label: isClosed ? 'Closed' : 'Open',
                 kind: isClosed ? StatusKind.neutral : StatusKind.success,
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            center.address ?? 'Address pending',
-            style: TextStyle(
-              color: scheme.onSurfaceVariant,
-              fontSize: 13,
-            ),
-          ),
           const SizedBox(height: AppSpacing.md),
-          Row(
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.sm,
             children: [
-              _Detail(
-                icon: Icons.near_me_outlined,
-                label: center.distanceKm == null
-                    ? 'Distance pending'
-                    : '${center.distanceKm!.toStringAsFixed(1)} km',
-              ),
-              const SizedBox(width: AppSpacing.md),
               _Detail(
                 icon: Icons.schedule_outlined,
                 label: center.hours ?? 'Hours pending',
               ),
-              const Spacer(),
-              Flexible(
-                child: Text(
-                  center.waitTime ?? center.capacityLabel ?? '',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: TextStyle(
-                    color: scheme.onSurfaceVariant,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+              _Detail(
+                icon: Icons.phone_outlined,
+                label: center.phone ?? 'Phone pending',
+              ),
+              if (center.distanceKm != null)
+                _Detail(
+                  icon: Icons.near_me_outlined,
+                  label: '${center.distanceKm!.toStringAsFixed(1)} km',
+                ),
+              if (capacity != null && capacity.trim().isNotEmpty)
+                _Detail(icon: Icons.timelapse_outlined, label: capacity),
+            ],
+          ),
+          if (services.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final service in services)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHigh,
+                      borderRadius: AppRadius.pill,
+                      border: Border.all(color: scheme.outlineVariant),
+                    ),
+                    child: Text(
+                      service,
+                      style: TextStyle(
+                        color: scheme.onSurfaceVariant,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
+              ],
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: isClosed ? null : () => _bookHere(context),
+                  icon: const Icon(Icons.calendar_month_outlined, size: 18),
+                  label: const Text('Book here'),
                 ),
               ),
             ],
@@ -259,26 +301,25 @@ class _Detail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Flexible(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: scheme.onSurfaceVariant),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: scheme.onSurfaceVariant,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: scheme.onSurfaceVariant),
+        const SizedBox(width: 4),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 210),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: scheme.onSurfaceVariant,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

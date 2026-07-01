@@ -55,16 +55,16 @@ class AppTheme {
     onError: Color(0xFFFFFFFF),
     errorContainer: Color(0xFF3A0606),
     onErrorContainer: Color(0xFFFFCDD2),
-    surface: Color(0xFF000000),
+    surface: Color(0xFF050506),
     onSurface: Color(0xFFF5F5F7),
-    surfaceContainerLowest: Color(0xFF000000),
-    surfaceContainerLow: Color(0xFF080808),
-    surfaceContainer: Color(0xFF0E0E0E),
-    surfaceContainerHigh: Color(0xFF161616),
-    surfaceContainerHighest: Color(0xFF1E1E1E),
+    surfaceContainerLowest: Color(0xFF050506),
+    surfaceContainerLow: Color(0xFF0B0B0D),
+    surfaceContainer: Color(0xFF111113),
+    surfaceContainerHigh: Color(0xFF1A1A1D),
+    surfaceContainerHighest: Color(0xFF242428),
     onSurfaceVariant: Color(0xFF9CA3AF),
     outline: Color(0xFF2A2A2A),
-    outlineVariant: Color(0xFF1A1A1A),
+    outlineVariant: Color(0xFF242428),
     inverseSurface: Color(0xFFF5F5F7),
     onInverseSurface: Color(0xFF0A0A0A),
     inversePrimary: Color(0xFFC62828),
@@ -77,10 +77,9 @@ class AppTheme {
 
   static ThemeData _build(ColorScheme scheme) {
     final base = ThemeData(useMaterial3: true, colorScheme: scheme);
-    final text = GoogleFonts.interTextTheme(base.textTheme).apply(
-      bodyColor: scheme.onSurface,
-      displayColor: scheme.onSurface,
-    );
+    final text = GoogleFonts.interTextTheme(
+      base.textTheme,
+    ).apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface);
 
     return base.copyWith(
       scaffoldBackgroundColor: scheme.surface,
@@ -88,12 +87,32 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: text.titleMedium?.copyWith(
           fontWeight: FontWeight.w700,
           fontSize: 18,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: scheme.surfaceContainer,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: scheme.surfaceContainer,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: scheme.surface,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: scheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
       ),
       dividerTheme: DividerThemeData(
@@ -126,7 +145,9 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
           padding: const EdgeInsets.symmetric(horizontal: 20),
         ),
@@ -136,7 +157,9 @@ class AppTheme {
           minimumSize: const Size.fromHeight(52),
           side: BorderSide(color: scheme.outline),
           foregroundColor: scheme.onSurface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/data/models/appointment.dart';
+import 'package:nbts/core/data/models/appointment_slot.dart';
 import 'package:nbts/core/data/models/json_utils.dart';
 
 class AppointmentsRepository {
@@ -27,6 +28,16 @@ class AppointmentsRepository {
     }
   }
 
+  Future<List<AppointmentSlot>> fetchSlots({
+    required int centerId,
+    required DateTime date,
+  }) async {
+    final day = _formatDate(date);
+    final response = await _api.get(
+      '/appointments/slots?center_id=$centerId&date=$day',
+    );
+    return readListPayload(response).map(AppointmentSlot.fromJson).toList();
+  }
 
   Future<Appointment> reschedule({
     required int appointmentId,
@@ -34,11 +45,14 @@ class AppointmentsRepository {
     required DateTime scheduledAt,
     String? notes,
   }) async {
-    final response = await _api.put('/appointments/$appointmentId', body: {
-      'blood_center_id': centerId,
-      'scheduled_at': scheduledAt.toIso8601String(),
-      if (notes != null && notes.isNotEmpty) 'notes': notes,
-    });
+    final response = await _api.put(
+      '/appointments/$appointmentId',
+      body: {
+        'blood_center_id': centerId,
+        'scheduled_at': scheduledAt.toIso8601String(),
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      },
+    );
     final payload = readObjectPayload(response);
     if (payload == null) {
       throw const ApiException('Unexpected appointment response');
@@ -54,21 +68,31 @@ class AppointmentsRepository {
     }
     return Appointment.fromJson(payload);
   }
+
   Future<Appointment> book({
     required int centerId,
     required DateTime scheduledAt,
     String? notes,
   }) async {
-    final response = await _api.post('/appointments', body: {
-      'center_id': centerId,
-      'blood_center_id': centerId,
-      'scheduled_at': scheduledAt.toIso8601String(),
-      if (notes != null && notes.isNotEmpty) 'notes': notes,
-    });
+    final response = await _api.post(
+      '/appointments',
+      body: {
+        'center_id': centerId,
+        'blood_center_id': centerId,
+        'scheduled_at': scheduledAt.toIso8601String(),
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      },
+    );
     final payload = readObjectPayload(response);
     if (payload == null) {
       throw const ApiException('Unexpected appointment response');
     }
     return Appointment.fromJson(payload);
+  }
+
+  static String _formatDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 }

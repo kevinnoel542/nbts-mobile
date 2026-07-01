@@ -46,7 +46,8 @@ class _DonorCardScreenState extends State<DonorCardScreen> {
             onPressed: () async {
               final card = await _cardFuture;
               if (!context.mounted) return;
-              final text = '''
+              final text =
+                  '''
 NBTS Donor Card
 Name: ${card.name ?? 'Pending'}
 Donor ID: ${card.donorId}
@@ -111,7 +112,8 @@ Blood group: ${card.bloodGroup ?? 'Pending'}
                       InfoRow(
                         icon: Icons.event_available_outlined,
                         label: 'Next eligible',
-                        value: _formatDate(card.nextEligibleDate) ??
+                        value:
+                            _formatDate(card.nextEligibleDate) ??
                             'Pending medical verification',
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -127,7 +129,8 @@ Blood group: ${card.bloodGroup ?? 'Pending'}
                       InfoRow(
                         icon: Icons.update_rounded,
                         label: 'QR expires',
-                        value: _formatDateTime(card.qrExpiresAt) ??
+                        value:
+                            _formatDateTime(card.qrExpiresAt) ??
                             'Refresh daily',
                       ),
                     ],
@@ -158,11 +161,7 @@ class _IdentityCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.water_drop_rounded,
-                size: 18,
-                color: scheme.primary,
-              ),
+              Icon(Icons.water_drop_rounded, size: 18, color: scheme.primary),
               const SizedBox(width: 6),
               Text(
                 'NBTS donor',
@@ -176,7 +175,9 @@ class _IdentityCard extends StatelessWidget {
               const Spacer(),
               StatusPill(
                 label: verified ? 'Verified' : 'Unverified',
-                icon: verified ? Icons.verified_outlined : Icons.pending_outlined,
+                icon: verified
+                    ? Icons.verified_outlined
+                    : Icons.pending_outlined,
                 kind: verified ? StatusKind.success : StatusKind.warning,
               ),
             ],
@@ -292,10 +293,7 @@ class _QrPanel extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Show this code at any NBTS center.',
-            style: TextStyle(
-              color: scheme.onSurfaceVariant,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: AppSpacing.lg),
           Container(
@@ -320,18 +318,6 @@ class _QrPanel extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            card.qrPayloadText,
-            textAlign: TextAlign.center,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: scheme.onSurfaceVariant,
-              fontSize: 11,
-              fontFamily: 'monospace',
-            ),
-          ),
         ],
       ),
     );
@@ -346,8 +332,18 @@ String _text(String? value, {required String fallback}) {
 String? _formatDate(DateTime? date) {
   if (date == null) return null;
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   return '${months[date.month - 1]} ${date.day}, ${date.year}';
 }
@@ -358,5 +354,3 @@ String? _formatDateTime(DateTime? date) {
   final mm = date.minute.toString().padLeft(2, '0');
   return '${_formatDate(date)}  $hh:$mm';
 }
-
-
