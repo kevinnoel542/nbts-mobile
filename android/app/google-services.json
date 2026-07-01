@@ -12,7 +12,20 @@
           "package_name": "com.nbts.mobile"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "856326606374-bmvd7af13at6dgo2mt29dkfq41b80g8h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nbts.mobile",
+            "certificate_hash": "db77e7a410d1af4e1eb0f6927c8cbc32befe1c6a"
+          }
+        },
+        {
+          "client_id": "856326606374-3bhh4uqqvgus4ktnfaac0mqe35mhmh2d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBkFnqW__09Ah4Ln_8Mx-rbJ6BKf6k5HoI"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "856326606374-3bhh4uqqvgus4ktnfaac0mqe35mhmh2d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

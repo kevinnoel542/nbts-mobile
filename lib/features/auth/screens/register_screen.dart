@@ -3,6 +3,9 @@ import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/routes/app_routes.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
+import 'package:nbts/features/auth/models/social_auth_provider.dart';
+import 'package:nbts/features/auth/services/firebase_social_auth_service.dart';
+import 'package:nbts/features/auth/widgets/social_auth_section.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -18,13 +21,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  static const _bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  static const _bloodGroups = [
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'AB+',
+    'AB-',
+    'O+',
+    'O-',
+  ];
   static const _genders = ['Male', 'Female', 'Other'];
   static const _regions = [
-    'Arusha', 'Dar es Salaam', 'Dodoma', 'Geita', 'Iringa', 'Kagera',
-    'Katavi', 'Kigoma', 'Kilimanjaro', 'Lindi', 'Manyara', 'Mara', 'Mbeya',
-    'Morogoro', 'Mtwara', 'Mwanza', 'Njombe', 'Pwani', 'Rukwa', 'Ruvuma',
-    'Shinyanga', 'Simiyu', 'Singida', 'Songwe', 'Tabora', 'Tanga',
+    'Arusha',
+    'Dar es Salaam',
+    'Dodoma',
+    'Geita',
+    'Iringa',
+    'Kagera',
+    'Katavi',
+    'Kigoma',
+    'Kilimanjaro',
+    'Lindi',
+    'Manyara',
+    'Mara',
+    'Mbeya',
+    'Morogoro',
+    'Mtwara',
+    'Mwanza',
+    'Njombe',
+    'Pwani',
+    'Rukwa',
+    'Ruvuma',
+    'Shinyanga',
+    'Simiyu',
+    'Singida',
+    'Songwe',
+    'Tabora',
+    'Tanga',
   ];
 
   String? _bloodGroup;
@@ -44,6 +78,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _startSocialAuth(SocialAuthProvider provider) async {
+    setState(() {
+      _submitting = true;
+      _formError = null;
+      _fieldErrors = null;
+    });
+    try {
+      final firebaseResult = await FirebaseSocialAuthService.signIn(provider);
+      if (firebaseResult == null) {
+        if (!mounted) return;
+        setState(() => _formError = '${provider.label} sign-up was cancelled.');
+        return;
+      }
+
+      final user = await Services.instance.auth.loginWithFirebase(
+        provider: firebaseResult.provider,
+        firebaseIdToken: firebaseResult.idToken,
+        email: firebaseResult.email,
+        name: firebaseResult.name,
+        photoUrl: firebaseResult.photoUrl,
+        uid: firebaseResult.uid,
+      );
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        user.isDonorProfileComplete
+            ? AppRoutes.dashboard
+            : AppRoutes.completeProfile,
+        (_) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _fieldErrors = e.errors;
+        _formError = e.errors == null ? e.message : e.firstError();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _formError = e.toString());
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   String? _err(String field) {
@@ -71,7 +149,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submit() async {
     setState(() => _formError = null);
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_bloodGroup == null || _gender == null || _region == null ||
+    if (_bloodGroup == null ||
+        _gender == null ||
+        _region == null ||
         _dateOfBirth == null) {
       setState(() => _formError = 'Complete all donor profile fields.');
       return;
@@ -133,7 +213,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
             ),
             children: [
               Text(
@@ -153,6 +236,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   fontSize: 14,
                   height: 1.5,
                 ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              SocialAuthSection(
+                enabled: !_submitting,
+                onProviderPressed: _startSocialAuth,
               ),
               const SizedBox(height: AppSpacing.xl),
               _SectionLabel('Account'),
@@ -208,9 +296,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     : null,
                 enabled: !_submitting,
                 suffix: IconButton(
-                  icon: Icon(_obscure
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined),
+                  icon: Icon(
+                    _obscure
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
@@ -240,13 +330,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   errorText: _err('gender'),
                 ),
                 items: _genders
-                    .map((g) => DropdownMenuItem(
-                          value: g,
-                          child: Text(g),
-                        ))
+                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                     .toList(),
-                onChanged:
-                    _submitting ? null : (v) => setState(() => _gender = v),
+                onChanged: _submitting
+                    ? null
+                    : (v) => setState(() => _gender = v),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
@@ -260,8 +348,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 items: _regions
                     .map((r) => DropdownMenuItem(value: r, child: Text(r)))
                     .toList(),
-                onChanged:
-                    _submitting ? null : (v) => setState(() => _region = v),
+                onChanged: _submitting
+                    ? null
+                    : (v) => setState(() => _region = v),
               ),
               const SizedBox(height: 12),
               InkWell(
@@ -309,8 +398,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline_rounded,
-                          size: 18, color: scheme.onErrorContainer),
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 18,
+                        color: scheme.onErrorContainer,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -328,6 +420,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ],
               const SizedBox(height: AppSpacing.lg),
               FilledButton(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(58),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 onPressed: _submitting ? null : _submit,
                 child: _submitting
                     ? const SizedBox(
@@ -343,7 +445,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: _submitting
                       ? null
                       : () => Navigator.pushReplacementNamed(
-                          context, AppRoutes.login),
+                          context,
+                          AppRoutes.login,
+                        ),
                   child: const Text('Already have an account?  Sign in'),
                 ),
               ),
@@ -416,6 +520,3 @@ class _Field extends StatelessWidget {
     );
   }
 }
-
-
-

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/routes/app_routes.dart';
+import 'package:nbts/features/auth/models/social_auth_provider.dart';
+import 'package:nbts/features/auth/services/firebase_social_auth_service.dart';
+import 'package:nbts/features/auth/widgets/social_auth_section.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +20,13 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _submitting = false;
   String? _formError;
 
+  void _showError(String message) {
+    setState(() => _formError = message);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   void dispose() {
     _identifierController.dispose();
@@ -24,7 +34,45 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _startSocialAuth(SocialAuthProvider provider) async {
+    setState(() {
+      _submitting = true;
+      _formError = null;
+    });
+    try {
+      final firebaseResult = await FirebaseSocialAuthService.signIn(provider);
+      if (firebaseResult == null) {
+        if (!mounted) return;
+        _showError('${provider.label} sign-in was cancelled.');
+        return;
+      }
 
+      final user = await Services.instance.auth.loginWithFirebase(
+        provider: firebaseResult.provider,
+        firebaseIdToken: firebaseResult.idToken,
+        email: firebaseResult.email,
+        name: firebaseResult.name,
+        photoUrl: firebaseResult.photoUrl,
+        uid: firebaseResult.uid,
+      );
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        user.isDonorProfileComplete
+            ? AppRoutes.dashboard
+            : AppRoutes.completeProfile,
+        (_) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showError(e.firstError());
+    } catch (e) {
+      if (!mounted) return;
+      _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
 
   Future<void> _submit() async {
     final id = _identifierController.text.trim();
@@ -48,13 +96,45 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _formError = e.firstError());
+      _showError(e.firstError());
     } catch (e) {
       if (!mounted) return;
-      setState(() => _formError = e.toString());
+      _showError(e.toString());
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  InputDecoration _fieldDecoration({
+    required ColorScheme scheme,
+    required IconData icon,
+    required String hintText,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      prefixIcon: Icon(icon, size: 21),
+      suffixIcon: suffixIcon,
+      hintText: hintText,
+      filled: true,
+      fillColor: scheme.surfaceContainerLow,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide(color: scheme.primary, width: 1.6),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+    );
   }
 
   @override
@@ -105,9 +185,10 @@ class _LoginScreenState extends State<LoginScreen> {
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               enabled: !_submitting,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.person_outline_rounded),
-                hintText: 'you@example.com  or  +255 712 000 000',
+              decoration: _fieldDecoration(
+                scheme: scheme,
+                icon: Icons.alternate_email_rounded,
+                hintText: 'Email or phone number',
               ),
             ),
             const SizedBox(height: 16),
@@ -126,15 +207,18 @@ class _LoginScreenState extends State<LoginScreen> {
               enabled: !_submitting,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _submit(),
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.lock_outline_rounded),
+              decoration: _fieldDecoration(
+                scheme: scheme,
+                icon: Icons.lock_outline_rounded,
+                hintText: 'Password',
                 suffixIcon: IconButton(
-                  icon: Icon(_obscure
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined),
+                  icon: Icon(
+                    _obscure
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
-                hintText: 'Your password',
               ),
             ),
             if (_formError != null) ...[
@@ -147,8 +231,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline_rounded,
-                        size: 18, color: scheme.onErrorContainer),
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 18,
+                      color: scheme.onErrorContainer,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -166,6 +253,16 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
             const SizedBox(height: 24),
             FilledButton(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(58),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               onPressed: _submitting ? null : _submit,
               child: _submitting
                   ? const SizedBox(
@@ -176,6 +273,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   : const Text('Sign in'),
             ),
 
+            const SizedBox(height: 24),
+            SocialAuthSection(
+              enabled: !_submitting,
+              onProviderPressed: _startSocialAuth,
+            ),
             const SizedBox(height: 28),
             Center(
               child: TextButton(
@@ -189,10 +291,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Center(
               child: Text(
                 'By continuing you accept the Privacy Policy.',
-                style: TextStyle(
-                  color: scheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
               ),
             ),
           ],
@@ -201,6 +300,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
-
-

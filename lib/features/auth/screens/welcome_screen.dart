@@ -30,7 +30,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const Spacer(),
+              const Spacer(flex: 2),
               Text(
                 'Donate blood.',
                 style: TextStyle(
@@ -53,30 +53,40 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Book appointments, track eligibility, and carry your digital donor card across every NBTS center.',
+                'Book donation appointments, track your donor profile, and carry your secure NBTS donor card.',
                 style: TextStyle(
                   color: scheme.onSurfaceVariant,
                   fontSize: 15,
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 36),
-              const _Feature(icon: Icons.lock_outline_rounded, text: 'Secure OTP & biometric sign-in'),
-              const _Feature(icon: Icons.place_outlined, text: 'Find centers and live wait times'),
-              const _Feature(icon: Icons.qr_code_rounded, text: 'Offline-ready digital donor card'),
-              const Spacer(),
+              const SizedBox(height: 34),
+              const _Feature(
+                icon: Icons.person_outline_rounded,
+                text: 'Create and manage your donor profile',
+              ),
+              const _Feature(
+                icon: Icons.event_available_outlined,
+                text: 'Book and view donation appointments',
+              ),
+              const _Feature(
+                icon: Icons.qr_code_rounded,
+                text: 'Carry your secure digital donor card',
+              ),
+              const Spacer(flex: 3),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-                  child: const Text('Create an account'),
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                  child: const Text('Sign in'),
                 ),
               ),
               const SizedBox(height: 12),
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
-                  child: const Text('I already have an account'),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                  child: const Text('Create an account'),
                 ),
               ),
             ],
@@ -117,3 +127,4 @@ class _Feature extends StatelessWidget {
     );
   }
 }
+

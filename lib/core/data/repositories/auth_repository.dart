@@ -5,6 +5,7 @@ import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/token_store.dart';
 import 'package:nbts/core/data/models/json_utils.dart';
 import 'package:nbts/core/data/models/user.dart';
+import 'package:nbts/features/auth/models/social_auth_provider.dart';
 
 class AuthRepository extends ChangeNotifier {
   AuthRepository({
@@ -63,6 +64,30 @@ class AuthRepository extends ChangeNotifier {
     return _persistFromAuthResponse(response);
   }
 
+
+  Future<User> loginWithFirebase({
+    required SocialAuthProvider provider,
+    required String firebaseIdToken,
+    String? email,
+    String? name,
+    String? photoUrl,
+    String? uid,
+  }) async {
+    final response = await _api.post(
+      '/auth/firebase',
+      authenticated: false,
+      body: {
+        'provider': provider.firebaseProviderId,
+        'firebase_id_token': firebaseIdToken,
+        'id_token': firebaseIdToken,
+        if (email != null && email.isNotEmpty) 'email': email,
+        if (name != null && name.isNotEmpty) 'name': name,
+        if (photoUrl != null && photoUrl.isNotEmpty) 'photo_url': photoUrl,
+        if (uid != null && uid.isNotEmpty) 'firebase_uid': uid,
+      },
+    );
+    return _persistFromAuthResponse(response);
+  }
   Future<User> fetchCurrentUser() async {
     final response = await _api.get('/user');
     final payload = readObjectPayload(response);
@@ -130,6 +155,7 @@ class AuthRepository extends ChangeNotifier {
     ]);
   }
 }
+
 
 
 

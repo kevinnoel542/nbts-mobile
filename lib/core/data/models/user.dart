@@ -35,6 +35,13 @@ class User {
   final int? totalVolumeMl;
   final DateTime? nextEligibleDate;
 
+  bool get isDonorProfileComplete =>
+      _hasText(phone) &&
+      _hasText(bloodGroup) &&
+      _hasText(gender) &&
+      _hasText(region) &&
+      dateOfBirth != null;
+
   factory User.fromJson(Map<String, dynamic> json) {
     final donorProfile = readObject(json, 'donor_profile');
     final profile = readObject(json, 'profile') ?? donorProfile;
@@ -76,3 +83,6 @@ class User {
     );
   }
 }
+
+bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+

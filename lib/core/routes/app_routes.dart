@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nbts/features/auth/screens/login_screen.dart';
 import 'package:nbts/features/auth/screens/register_screen.dart';
+import 'package:nbts/features/auth/screens/complete_profile_screen.dart';
 import 'package:nbts/features/auth/screens/welcome_screen.dart';
 import 'package:nbts/features/dashboard/screens/donor_card_screen.dart';
 import 'package:nbts/features/dashboard/screens/main_layout.dart';
@@ -15,6 +16,7 @@ class AppRoutes {
   static const String welcome = '/welcome';
   static const String login = '/login';
   static const String register = '/register';
+  static const String completeProfile = '/complete-profile';
   static const String dashboard = '/dashboard';
   static const String donorCard = '/donor-card';
   static const String bookAppointment = '/book-appointment';
@@ -27,6 +29,7 @@ class AppRoutes {
     welcome: (context) => const WelcomeScreen(),
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
+    completeProfile: (context) => const CompleteProfileScreen(),
     dashboard: (context) => const MainLayout(),
     donorCard: (context) => const DonorCardScreen(),
     bookAppointment: (context) => const BookAppointmentScreen(),
@@ -36,4 +39,5 @@ class AppRoutes {
     notifications: (context) => const NotificationsScreen(),
   };
 }
+
 
