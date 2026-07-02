@@ -50,7 +50,7 @@ class _DonorCardScreenState extends State<DonorCardScreen> {
                   '''
 NBTS Donor Card
 Name: ${card.name ?? 'Pending'}
-Donor ID: ${card.donorId}
+NBTS ID: ${card.donorId}
 Blood group: ${card.bloodGroup ?? 'Pending'}
 ''';
               await Clipboard.setData(ClipboardData(text: text.trim()));
@@ -98,7 +98,7 @@ Blood group: ${card.bloodGroup ?? 'Pending'}
                 AppSpacing.lg,
                 AppSpacing.sm,
                 AppSpacing.lg,
-                AppSpacing.xl,
+                AppSpacing.xxl + AppSpacing.lg,
               ),
               children: [
                 _IdentityCard(scheme: scheme, card: card),

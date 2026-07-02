@@ -18,6 +18,10 @@ class User {
     this.totalVolumeMl,
     this.nextEligibleDate,
     this.profileComplete,
+    this.pushNotificationsEnabled,
+    this.smsRemindersEnabled,
+    this.shareAnonymizedData,
+    this.language,
   });
 
   final int id;
@@ -36,6 +40,10 @@ class User {
   final int? totalVolumeMl;
   final DateTime? nextEligibleDate;
   final bool? profileComplete;
+  final bool? pushNotificationsEnabled;
+  final bool? smsRemindersEnabled;
+  final bool? shareAnonymizedData;
+  final String? language;
 
   bool get hasRequiredDonorFields =>
       _hasText(phone) &&
@@ -115,6 +123,24 @@ class User {
             'profileComplete',
             'donor_profile_complete',
           ]),
+      pushNotificationsEnabled:
+          readBool(json, [
+            'push_notifications_enabled',
+            'push_notifications',
+          ]) ??
+          readBool(profile, [
+            'push_notifications_enabled',
+            'push_notifications',
+          ]),
+      smsRemindersEnabled:
+          readBool(json, ['sms_reminders_enabled', 'sms_reminders']) ??
+          readBool(profile, ['sms_reminders_enabled', 'sms_reminders']),
+      shareAnonymizedData:
+          readBool(json, ['share_anonymized_data']) ??
+          readBool(profile, ['share_anonymized_data']),
+      language:
+          readString(json, ['language', 'locale']) ??
+          readString(profile, ['language', 'locale']),
     );
   }
 }

@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _sms = true;
   bool _shareAnon = false;
   String _language = 'English';
+  bool _prefsHydrated = false;
   late Future<User> _profileFuture;
 
   @override
@@ -57,6 +58,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ).showSnackBar(const SnackBar(content: Text('Preference updated.')));
     } on ApiException catch (e) {
       if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.firstError())));
+    }
+  }
+
+  Future<void> _updateLanguage(String language) async {
+    final previous = _language;
+    setState(() => _language = language);
+    try {
+      await Services.instance.profile.update({
+        'language': language == 'Swahili' ? 'sw' : 'en',
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Language updated.')));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _language = previous);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.firstError())));
@@ -157,6 +178,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
 
           final user = snapshot.data;
+          if (!_prefsHydrated && user != null) {
+            _push = user.pushNotificationsEnabled ?? _push;
+            _sms = user.smsRemindersEnabled ?? _sms;
+            _shareAnon = user.shareAnonymizedData ?? _shareAnon;
+            _language = _languageLabel(user.language) ?? _language;
+            _prefsHydrated = true;
+          }
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView(
@@ -164,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 AppSpacing.lg,
                 AppSpacing.sm,
                 AppSpacing.lg,
-                AppSpacing.xl,
+                AppSpacing.xxl + AppSpacing.lg,
               ),
               children: [
                 _Header(scheme: scheme, user: user),
@@ -284,8 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ButtonSegment(value: 'Swahili', label: Text('Swahili')),
                   ],
                   selected: {_language},
-                  onSelectionChanged: (v) =>
-                      setState(() => _language = v.first),
+                  onSelectionChanged: (v) => _updateLanguage(v.first),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 const SectionHeader('Support'),
@@ -389,9 +416,19 @@ class _Header extends StatelessWidget {
                         letterSpacing: -0.2,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'NBTS ID',
+                      style: TextStyle(
+                        color: scheme.onSurfaceVariant,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
-                      _text(user?.donorId, fallback: 'Pending NBTS ID'),
+                      _text(user?.donorId, fallback: 'Pending'),
                       style: TextStyle(
                         color: scheme.onSurfaceVariant,
                         fontSize: 12,
@@ -420,7 +457,7 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.lg),
               _Metric(
-                label: 'Points',
+                label: 'Donor points',
                 value: '${user?.loyaltyPoints ?? 0}',
                 scheme: scheme,
               ),
@@ -510,4 +547,13 @@ class _Divider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Divider(height: 1, thickness: 1, color: scheme.outlineVariant);
   }
+}
+
+String? _languageLabel(String? value) {
+  final normalized = value?.toLowerCase().trim();
+  return switch (normalized) {
+    'sw' || 'swahili' || 'kiswahili' => 'Swahili',
+    'en' || 'english' => 'English',
+    _ => null,
+  };
 }

@@ -143,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     AppSpacing.lg,
                     AppSpacing.sm,
                     AppSpacing.lg,
-                    AppSpacing.xl,
+                    AppSpacing.xxl + AppSpacing.lg,
                   ),
                   children: [
                     _Greeting(scheme: scheme, user: user),
@@ -417,7 +417,7 @@ class _QuickActions extends StatelessWidget {
     final items = <_QuickActionData>[
       _QuickActionData(
         icon: Icons.place_outlined,
-        label: 'Find centers',
+        label: 'Find center',
         route: AppRoutes.centers,
       ),
       _QuickActionData(
@@ -427,7 +427,7 @@ class _QuickActions extends StatelessWidget {
       ),
       _QuickActionData(
         icon: Icons.qr_code_rounded,
-        label: 'Donor card',
+        label: 'Card',
         route: AppRoutes.donorCard,
       ),
       _QuickActionData(
@@ -699,10 +699,10 @@ class _UrgentRequestBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const StatusPill(label: 'Urgent', kind: StatusKind.warning),
+                const StatusPill(label: 'All clear', kind: StatusKind.success),
                 const SizedBox(height: 6),
                 Text(
-                  'Awaiting NBTS urgent request feed',
+                  'No urgent blood requests right now',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 14,

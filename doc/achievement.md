@@ -336,3 +336,27 @@ reason / message / status_label
 If Laravel has not added the endpoint yet, Flutter falls back to standard times so the app does not break. Laravel should still do the final availability check inside `POST /api/v1/appointments` and `PUT /api/v1/appointments/{id}` because a slot can become full while the donor is on the booking screen.
 
 
+
+## 2026-07-02 API IP Update
+
+Mobile API base URL was updated to:
+
+```text
+http://192.168.0.157:8003/api/v1
+```
+
+Laravel should be reachable from the phone at this IP and port. If the server IP changes again, update `lib/core/api/api_config.dart` or run Flutter with `--dart-define=API_BASE_URL=...`.
+
+
+## 2026-07-02 UI Trust And Wording Polish
+
+Mobile wording and layout polish completed:
+
+- Appointment cards no longer show `Confirmed` when the backend status is `pending`.
+- Appointment status labels now display clearer text such as `Pending confirmation`, `Confirmed`, `Completed`, and `Cancelled`.
+- Dashboard urgent request placeholder now says `No urgent blood requests right now` instead of backend-style feed wording.
+- Profile metric label changed from `Points` to `Donor points`.
+- Dashboard quick action labels were shortened to reduce truncation: `Find center`, `History`, `Card`, `Profile`.
+- Main tab scroll views now have stronger bottom padding so content has more breathing room above the bottom navigation.
+- Profile and donor card screens now explicitly label the identifier as `NBTS ID`, even if the backend value still starts with an older prefix.
+

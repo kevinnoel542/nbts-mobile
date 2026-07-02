@@ -97,7 +97,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     AppSpacing.lg,
                     AppSpacing.sm,
                     AppSpacing.lg,
-                    AppSpacing.xl,
+                    AppSpacing.xxl + AppSpacing.lg,
                   ),
                   children: [
                     const SectionHeader('Impact'),
@@ -120,7 +120,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             padding: const EdgeInsets.all(AppSpacing.md),
                             child: StatTile(
                               icon: Icons.favorite_outline_rounded,
-                              value: '${user?.totalDonations ?? donations.length}',
+                              value:
+                                  '${user?.totalDonations ?? donations.length}',
                               label: 'Donations',
                             ),
                           ),
@@ -165,7 +166,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   static String _liters(User? user, List<DonationRecord> records) {
-    final ml = user?.totalVolumeMl ??
+    final ml =
+        user?.totalVolumeMl ??
         records.fold<int>(0, (sum, record) => sum + (record.volumeMl ?? 0));
     return (ml / 1000).toStringAsFixed(1);
   }
@@ -252,8 +254,10 @@ class _HistoryTile extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                _text(record.donationType ?? record.bloodType, fallback: 'blood')
-                    .toUpperCase(),
+                _text(
+                  record.donationType ?? record.bloodType,
+                  fallback: 'blood',
+                ).toUpperCase(),
                 style: TextStyle(
                   color: scheme.onSurfaceVariant,
                   fontSize: 9,
@@ -270,8 +274,18 @@ class _HistoryTile extends StatelessWidget {
 
   static String _month(DateTime date) {
     const months = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC',
     ];
     return months[date.month - 1];
   }
@@ -288,7 +302,6 @@ class _HistoryTile extends StatelessWidget {
     return value;
   }
 }
-
 
 void _showHistoryFilterInfo(BuildContext context) {
   showModalBottomSheet<void>(
@@ -307,9 +320,9 @@ void _showHistoryFilterInfo(BuildContext context) {
         children: [
           Text(
             'Donation records',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: AppSpacing.sm),
           const Text(
@@ -328,4 +341,3 @@ void _showHistoryFilterInfo(BuildContext context) {
     ),
   );
 }
-

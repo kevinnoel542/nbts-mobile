@@ -131,7 +131,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     AppSpacing.lg,
                     AppSpacing.sm,
                     AppSpacing.lg,
-                    AppSpacing.xl,
+                    AppSpacing.xxl + AppSpacing.lg,
                   ),
                   children: [
                     const SectionHeader('Next appointment'),
@@ -153,12 +153,22 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                       ),
                     const SizedBox(height: AppSpacing.md),
                     FilledButton.icon(
-                      onPressed: () => Navigator.pushNamed(
-                        context,
-                        AppRoutes.bookAppointment,
+                      onPressed: upcoming == null
+                          ? () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.bookAppointment,
+                            )
+                          : () => _reschedule(upcoming),
+                      icon: Icon(
+                        upcoming == null
+                            ? Icons.add_rounded
+                            : Icons.edit_calendar_outlined,
                       ),
-                      icon: const Icon(Icons.add_rounded),
-                      label: const Text('Book new donation'),
+                      label: Text(
+                        upcoming == null
+                            ? 'Book new donation'
+                            : 'Change appointment',
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     const SectionHeader('All appointments'),
@@ -214,14 +224,14 @@ class _UpcomingCard extends StatelessWidget {
             children: [
               const Expanded(
                 child: Text(
-                  'Confirmed',
+                  'Status',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                 ),
               ),
               StatusPill(
-                label: _text(appointment.status, fallback: 'Upcoming'),
-                icon: Icons.event_available_outlined,
-                kind: StatusKind.success,
+                label: _statusLabel(appointment.status),
+                icon: _statusIcon(appointment.status),
+                kind: _statusKind(appointment.status),
               ),
             ],
           ),
@@ -335,8 +345,8 @@ class _AppointmentCard extends StatelessWidget {
               PopupMenuItem(value: 'cancel', child: Text('Cancel')),
             ],
             child: StatusPill(
-              label: _text(appointment.status, fallback: 'Booked'),
-              kind: StatusKind.neutral,
+              label: _statusLabel(appointment.status),
+              kind: _statusKind(appointment.status),
             ),
           ),
         ],
@@ -369,6 +379,39 @@ String _formatDateTime(DateTime? date) {
   final hh = date.hour.toString().padLeft(2, '0');
   final mm = date.minute.toString().padLeft(2, '0');
   return '${months[date.month - 1]} ${date.day}, ${date.year}  $hh:$mm';
+}
+
+String _statusLabel(String? status) {
+  final value = status?.toLowerCase().trim();
+  return switch (value) {
+    'pending' => 'Pending confirmation',
+    'confirmed' => 'Confirmed',
+    'rescheduled' => 'Rescheduled',
+    'cancelled' || 'canceled' => 'Cancelled',
+    'completed' => 'Completed',
+    'missed' => 'Missed',
+    _ => 'Upcoming',
+  };
+}
+
+StatusKind _statusKind(String? status) {
+  final value = status?.toLowerCase().trim();
+  return switch (value) {
+    'confirmed' || 'completed' => StatusKind.success,
+    'pending' || 'rescheduled' => StatusKind.warning,
+    'cancelled' || 'canceled' || 'missed' => StatusKind.neutral,
+    _ => StatusKind.neutral,
+  };
+}
+
+IconData _statusIcon(String? status) {
+  final value = status?.toLowerCase().trim();
+  return switch (value) {
+    'confirmed' || 'completed' => Icons.event_available_outlined,
+    'pending' || 'rescheduled' => Icons.schedule_rounded,
+    'cancelled' || 'canceled' || 'missed' => Icons.event_busy_outlined,
+    _ => Icons.event_available_outlined,
+  };
 }
 
 bool _canManage(Appointment appointment) {

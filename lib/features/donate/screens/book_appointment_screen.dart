@@ -155,6 +155,15 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     try {
       final reschedule = _rescheduleAppointment;
       if (reschedule == null) {
+        final active = await Services.instance.appointments.fetchUpcoming();
+        if (active != null) {
+          if (!mounted) return;
+          setState(
+            () => _formError =
+                'You already have an active appointment. Reschedule or cancel it first.',
+          );
+          return;
+        }
         await Services.instance.appointments.book(
           centerId: center.id,
           scheduledAt: scheduledAt,
@@ -247,6 +256,12 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
             onChanged: (slot) => setState(() => _selectedSlot = slot),
           ),
           const SizedBox(height: AppSpacing.xl),
+          _AppointmentSummary(
+            center: _selectedCenter,
+            date: _selectedDate,
+            slot: _selectedSlot,
+          ),
+          const SizedBox(height: AppSpacing.md),
           AppCard(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Row(
@@ -790,6 +805,108 @@ class _SlotButton extends StatelessWidget {
   }
 }
 
+class _AppointmentSummary extends StatelessWidget {
+  const _AppointmentSummary({
+    required this.center,
+    required this.date,
+    required this.slot,
+  });
+
+  final DonationCenter? center;
+  final DateTime? date;
+  final AppointmentSlot? slot;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Appointment summary',
+            style: TextStyle(
+              color: scheme.onSurface,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _SummaryLine(
+            icon: Icons.place_outlined,
+            label: 'Center',
+            value: center?.name ?? 'Choose center',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _SummaryLine(
+            icon: Icons.calendar_today_outlined,
+            label: 'Date',
+            value: _formatDate(date) ?? 'Choose date',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _SummaryLine(
+            icon: Icons.schedule_outlined,
+            label: 'Time',
+            value: slot?.value ?? 'Choose time',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryLine extends StatelessWidget {
+  const _SummaryLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 17, color: scheme.onSurfaceVariant),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: scheme.onSurfaceVariant,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: scheme.onSurface,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _Step extends StatelessWidget {
   const _Step({required this.number, required this.title});
 
@@ -842,4 +959,23 @@ class _SlotOptions {
 
   final List<AppointmentSlot> slots;
   final bool usingFallback;
+}
+
+String? _formatDate(DateTime? date) {
+  if (date == null) return null;
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${months[date.month - 1]} ${date.day}, ${date.year}';
 }

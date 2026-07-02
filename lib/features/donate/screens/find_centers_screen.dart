@@ -116,7 +116,7 @@ class _FindCentersScreenState extends State<FindCentersScreen> {
                       AppSpacing.lg,
                       0,
                       AppSpacing.lg,
-                      AppSpacing.xl,
+                      AppSpacing.xxl + AppSpacing.lg,
                     ),
                     itemCount: filtered.length,
                     separatorBuilder: (_, _) =>
@@ -163,7 +163,7 @@ class _StateList extends StatelessWidget {
           AppSpacing.lg,
           AppSpacing.xl,
           AppSpacing.lg,
-          AppSpacing.xl,
+          AppSpacing.xxl + AppSpacing.lg,
         ),
         children: [child],
       ),
