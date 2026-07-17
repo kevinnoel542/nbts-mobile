@@ -360,3 +360,125 @@ Mobile wording and layout polish completed:
 - Main tab scroll views now have stronger bottom padding so content has more breathing room above the bottom navigation.
 - Profile and donor card screens now explicitly label the identifier as `NBTS ID`, even if the backend value still starts with an older prefix.
 
+
+## 2026-07-17 API IP Update
+
+Mobile API base URL was updated to:
+
+```text
+http://192.168.0.195:8003/api/v1
+```
+
+The Laravel server should be reachable from the phone at `http://192.168.0.195:8003/`, while Flutter keeps `/api/v1` in the configured API base for API requests.
+
+
+## 2026-07-17 Google Sign-In ApiException 10
+
+Google Sign-In failed with:
+
+```text
+PlatformException(sign_in_failed, com.google.android.gms.common.api.ApiException: 10)
+```
+
+Local package name is correct:
+
+```text
+com.nbts.mobile
+```
+
+The issue is a Firebase SHA mismatch.
+
+Current `google-services.json` contains this SHA-1:
+
+```text
+DB:77:E7:A4:10:D1:AF:4E:1E:B0:F6:92:7C:8C:BC:32:BE:FE:1C:6A
+```
+
+But the current Android debug build is signed with:
+
+```text
+SHA1: CC:D7:96:28:BE:EF:44:43:E4:5E:32:C1:6F:75:1B:D3:19:19:37:9E
+SHA-256: E8:94:56:10:15:82:58:DA:B3:5D:E6:45:7A:61:A6:E1:C7:DE:CF:86:39:CD:CC:84:D8:10:52:4E:9A:F2:33:D6
+```
+
+Firebase Console must add the current SHA-1 and SHA-256 to the Android app `com.nbts.mobile`, then download a fresh `google-services.json` and replace `android/app/google-services.json`.
+
+
+## 2026-07-17 SMS Reminders Clarification
+
+The mobile app currently treats `SMS reminders` as a donor preference only.
+
+Flutter behavior:
+
+- The Profile screen shows an `SMS reminders` switch.
+- When changed, Flutter sends this field to Laravel through `PUT /api/v1/profile`:
+
+```json
+{
+  "sms_reminders_enabled": true
+}
+```
+
+or:
+
+```json
+{
+  "sms_reminders_enabled": false
+}
+```
+
+What Flutter should do next:
+
+- Load the saved `sms_reminders_enabled` value from Laravel profile responses.
+- If the donor has no phone number, show a clear message before enabling SMS reminders.
+- Explain that SMS reminders are sent to the donor phone number saved on the profile.
+- Keep push notifications separate from SMS reminders.
+
+What Laravel must do:
+
+- Save `sms_reminders_enabled` on the user or donor profile.
+- Send SMS only when the donor has a valid phone number and `sms_reminders_enabled` is true.
+- Use an SMS provider such as Twilio, Africa's Talking, Beem, NextSMS, or a local mobile network gateway.
+- Send appointment reminders to the donor profile phone number, for example 7 days, 3 days, or 1 day before the appointment.
+- Respect opt-out immediately when `sms_reminders_enabled` is false.
+
+Important: Flutter does not send SMS directly. Laravel is responsible for SMS scheduling, delivery, provider integration, and delivery logs.
+
+
+## 2026-07-17 Removed Share Anonymized Data Preference
+
+Flutter no longer exposes `share_anonymized_data` in the mobile app.
+
+Removed from mobile:
+
+- Profile screen preference switch.
+- Complete Profile onboarding preference switch.
+- `PUT /api/v1/profile` payloads sent by Flutter.
+- Mobile `User` model parsing for this field.
+
+Laravel can keep the backend field if needed for admin/internal policy, but donors will no longer control this setting from the mobile app.
+
+
+## 2026-07-17 Profile screen polish
+- Removed descriptions under Push notifications and SMS reminders in the mobile profile/preferences UI.
+- Added a section marker beside profile section headings; it appears white in dark mode and red in light mode through the shared SectionHeader widget.
+- Profile language selection now updates the Profile screen labels immediately and saves en/sw to Laravel through PUT /api/v1/profile.
+- The Profile edit icon now opens the donor profile form in edit mode, prefills known profile fields, saves to Laravel, then refreshes the Profile screen.
+- Flutter no longer sends share_anonymized_data; Laravel can ignore/remove that preference from donor profile payloads when convenient.
+
+
+## 2026-07-17 Profile photo, medical summary, and donor card
+- Medical summary on Profile now opens a real detail sheet using the loaded donor profile values: blood group, gender, region, date of birth, next eligible date, and donation count.
+- Donor card screen now has a more premium NBTS digital card style while keeping the QR code plain and scannable.
+- Flutter now reads user photo_url/profile_photo_url/avatar_url/picture from Laravel and falls back to the Firebase/Google photo URL when available.
+- Flutter now lets the donor pick a local profile photo and uploads it as multipart form data to POST /api/v1/profile/photo with the field name photo.
+- Laravel should add POST /api/v1/profile/photo, store the image, save the public photo URL on the user/profile, and return the same profile payload shape used by GET /api/v1/profile.
+
+
+## 2026-07-17 Campaign card navigation
+- Flutter now parses campaign center_id/blood_center_id and center_name/blood_center_name when Laravel provides them.
+- Urgent campaign cards now use Book donation as the primary action.
+- Campaigns with a center_id open the booking screen with that center preselected.
+- Campaigns without a center_id still open Centers so the donor can choose where to donate.
+- Laravel/admin should send center_id, center_name, starts_at, ends_at, blood_group, and urgent for campaign cards so Flutter can route to the correct destination.
+

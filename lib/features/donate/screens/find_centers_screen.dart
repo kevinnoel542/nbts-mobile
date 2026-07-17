@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/donation_center.dart';
@@ -39,9 +40,10 @@ class _FindCentersScreenState extends State<FindCentersScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Centers'),
+        title: Text(context.t('centers.title')),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -53,7 +55,7 @@ class _FindCentersScreenState extends State<FindCentersScreen> {
             child: TextField(
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
-                hintText: 'Search by name or area',
+                hintText: context.t('centers.search'),
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
                 fillColor: scheme.surfaceContainer,
@@ -89,7 +91,7 @@ class _FindCentersScreenState extends State<FindCentersScreen> {
                     onRefresh: _refresh,
                     child: EmptyState(
                       icon: Icons.cloud_off_outlined,
-                      title: 'Centers unavailable',
+                      title: context.t('centers.unavailable'),
                       message: message,
                     ),
                   );
@@ -100,11 +102,10 @@ class _FindCentersScreenState extends State<FindCentersScreen> {
                 if (filtered.isEmpty) {
                   return _StateList(
                     onRefresh: _refresh,
-                    child: const EmptyState(
+                    child: EmptyState(
                       icon: Icons.place_outlined,
-                      title: 'No centers found',
-                      message:
-                          'Try another area or pull to refresh NBTS centers.',
+                      title: context.t('centers.none'),
+                      message: context.t('centers.noneMessage'),
                     ),
                   );
                 }
@@ -211,14 +212,17 @@ class _CenterTile extends StatelessWidget {
                     const SizedBox(height: 6),
                     _Detail(
                       icon: Icons.place_outlined,
-                      label: center.address ?? 'Address pending',
+                      label:
+                          center.address ?? context.t('centers.addressPending'),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               StatusPill(
-                label: isClosed ? 'Closed' : 'Open',
+                label: isClosed
+                    ? context.t('centers.closed')
+                    : context.t('centers.open'),
                 kind: isClosed ? StatusKind.neutral : StatusKind.success,
               ),
             ],
@@ -230,11 +234,11 @@ class _CenterTile extends StatelessWidget {
             children: [
               _Detail(
                 icon: Icons.schedule_outlined,
-                label: center.hours ?? 'Hours pending',
+                label: center.hours ?? context.t('centers.hoursPending'),
               ),
               _Detail(
                 icon: Icons.phone_outlined,
-                label: center.phone ?? 'Phone pending',
+                label: center.phone ?? context.t('centers.phonePending'),
               ),
               if (center.distanceKm != null)
                 _Detail(
@@ -281,7 +285,7 @@ class _CenterTile extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: isClosed ? null : () => _bookHere(context),
                   icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                  label: const Text('Book here'),
+                  label: Text(context.t('centers.bookHere')),
                 ),
               ),
             ],
@@ -323,3 +327,4 @@ class _Detail extends StatelessWidget {
     );
   }
 }
+

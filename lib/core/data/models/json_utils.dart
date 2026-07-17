@@ -76,7 +76,11 @@ List<String> readStringList(Map<String, dynamic>? json, List<String> keys) {
       return v.map((e) => e.toString()).toList();
     }
     if (v is String && v.isNotEmpty) {
-      return v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      return v
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
   }
   return const [];
@@ -84,13 +88,19 @@ List<String> readStringList(Map<String, dynamic>? json, List<String> keys) {
 
 List<Map<String, dynamic>> readListPayload(dynamic payload) {
   if (payload is List) {
-    return payload.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
+    return payload
+        .whereType<Map>()
+        .map((e) => e.cast<String, dynamic>())
+        .toList();
   }
   if (payload is Map<String, dynamic>) {
     for (final key in ['data', 'results', 'items']) {
       final v = payload[key];
       if (v is List) {
-        return v.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
+        return v
+            .whereType<Map>()
+            .map((e) => e.cast<String, dynamic>())
+            .toList();
       }
     }
   }

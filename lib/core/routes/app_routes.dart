@@ -39,5 +39,3 @@ class AppRoutes {
     notifications: (context) => const NotificationsScreen(),
   };
 }
-
-

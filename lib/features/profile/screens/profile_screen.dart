@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/user.dart';
@@ -9,6 +13,7 @@ import 'package:nbts/core/widgets/app_card.dart';
 import 'package:nbts/core/widgets/empty_state.dart';
 import 'package:nbts/core/widgets/section_header.dart';
 import 'package:nbts/features/auth/services/firebase_social_auth_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,9 +25,10 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _push = true;
   bool _sms = true;
-  bool _shareAnon = false;
-  String _language = 'English';
+  String _language = LanguageController.label(LanguageController.code.value);
   bool _prefsHydrated = false;
+  bool _photoUploading = false;
+  User? _lastUser;
   late Future<User> _profileFuture;
 
   @override
@@ -67,6 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _updateLanguage(String language) async {
     final previous = _language;
     setState(() => _language = language);
+    await LanguageController.set(language);
     try {
       await Services.instance.profile.update({
         'language': language == 'Swahili' ? 'sw' : 'en',
@@ -77,11 +84,179 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ).showSnackBar(const SnackBar(content: Text('Language updated.')));
     } on ApiException catch (e) {
       if (!mounted) return;
+      await LanguageController.set(previous);
+      if (!mounted) return;
       setState(() => _language = previous);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.firstError())));
     }
+  }
+
+  String _text(String? value, {required String fallback}) {
+    if (value == null || value.trim().isEmpty) return fallback;
+    return value;
+  }
+
+  String _copy(String key) {
+    final sw = _language == 'Swahili';
+    if (!sw) {
+      return switch (key) {
+        'profileTitle' => 'Profile',
+        'account' => 'Account',
+        'donorCard' => 'Donor card',
+        'medicalSummary' => 'Medical summary',
+        'emergencyContact' => 'Emergency contact',
+        'notifications' => 'Notifications',
+        'pushNotifications' => 'Push notifications',
+        'smsReminders' => 'SMS reminders',
+        'appearance' => 'Appearance',
+        'light' => 'Light',
+        'dark' => 'Dark',
+        'system' => 'System',
+        'language' => 'Language',
+        'support' => 'Support',
+        'faq' => 'FAQ and donor guide',
+        'contactSupport' => 'Contact NBTS support',
+        'privacy' => 'Account and privacy',
+        'signOut' => 'Sign out',
+        _ => key,
+      };
+    }
+
+    return switch (key) {
+      'profileTitle' => 'Wasifu',
+      'account' => 'Akaunti',
+      'donorCard' => 'Kadi ya mchangiaji',
+      'medicalSummary' => 'Muhtasari wa afya',
+      'emergencyContact' => 'Mawasiliano ya dharura',
+      'notifications' => 'Arifa',
+      'pushNotifications' => 'Arifa za programu',
+      'smsReminders' => 'Vikumbusho vya SMS',
+      'appearance' => 'Mwonekano',
+      'light' => 'Mwanga',
+      'dark' => 'Giza',
+      'system' => 'Mfumo',
+      'language' => 'Lugha',
+      'support' => 'Msaada',
+      'faq' => 'Maswali na mwongozo',
+      'contactSupport' => 'Wasiliana na NBTS',
+      'privacy' => 'Akaunti na faragha',
+      'signOut' => 'Toka',
+      _ => key,
+    };
+  }
+
+  Future<void> _pickProfilePhoto() async {
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+
+      setState(() => _photoUploading = true);
+      final user = await Services.instance.profile.updatePhoto(
+        File(picked.path),
+      );
+      _lastUser = user;
+      if (!mounted) return;
+      await _refresh();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('profile.photoUpdated'))),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.firstError())));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not update photo: $e')));
+    } finally {
+      if (mounted) setState(() => _photoUploading = false);
+    }
+  }
+
+  void _showMedicalSummary(User? user) {
+    final scheme = Theme.of(context).colorScheme;
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.xl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.monitor_heart_outlined, color: scheme.primary),
+                const SizedBox(width: 10),
+                Text(
+                  _copy('medicalSummary'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _SummaryLine(
+              label: context.t('auth.bloodGroup'),
+              value: _text(
+                user?.bloodGroup,
+                fallback: context.t('common.pending'),
+              ),
+            ),
+            _SummaryLine(
+              label: context.t('auth.gender'),
+              value: _text(user?.gender, fallback: context.t('common.pending')),
+            ),
+            _SummaryLine(
+              label: context.t('auth.region'),
+              value: _text(user?.region, fallback: context.t('common.pending')),
+            ),
+            _SummaryLine(
+              label: context.t('auth.dateOfBirth'),
+              value:
+                  _formatDate(user?.dateOfBirth) ?? context.t('common.pending'),
+            ),
+            _SummaryLine(
+              label: context.t('dashboard.nextEligible'),
+              value:
+                  _formatDate(user?.nextEligibleDate) ??
+                  context.t('common.pendingMedical'),
+            ),
+            _SummaryLine(
+              label: context.t('medical.totalDonations'),
+              value: '${user?.totalDonations ?? 0}',
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.donorCard);
+                },
+                icon: const Icon(Icons.qr_code_rounded),
+                label: Text(context.t('medical.openCard')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showInfoSheet({
@@ -136,16 +311,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Profile'),
+        title: Text(_copy('profileTitle')),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => _showInfoSheet(
-              title: 'Edit profile',
-              icon: Icons.edit_outlined,
-              message:
-                  'Use the account rows below to review your donor card, medical summary, emergency contact, and preferences.',
-            ),
+            onPressed: () async {
+              final changed = await Navigator.pushNamed(
+                context,
+                AppRoutes.completeProfile,
+                arguments: {'mode': 'edit', 'user': _lastUser},
+              );
+              if (changed == true && mounted) await _refresh();
+            },
           ),
           const SizedBox(width: 4),
         ],
@@ -178,11 +355,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
 
           final user = snapshot.data;
+          _lastUser = user;
           if (!_prefsHydrated && user != null) {
             _push = user.pushNotificationsEnabled ?? _push;
             _sms = user.smsRemindersEnabled ?? _sms;
-            _shareAnon = user.shareAnonymizedData ?? _shareAnon;
-            _language = _languageLabel(user.language) ?? _language;
+            _language =
+                _languageLabel(user.language) ??
+                LanguageController.label(LanguageController.code.value);
             _prefsHydrated = true;
           }
           return RefreshIndicator(
@@ -195,39 +374,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 AppSpacing.xxl + AppSpacing.lg,
               ),
               children: [
-                _Header(scheme: scheme, user: user),
+                _Header(
+                  scheme: scheme,
+                  user: user,
+                  uploadingPhoto: _photoUploading,
+                  onPhotoTap: _photoUploading ? null : _pickProfilePhoto,
+                ),
                 const SizedBox(height: AppSpacing.xl),
-                const SectionHeader('Account'),
+                SectionHeader(_copy('account')),
                 AppCard(
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
                       _Row(
                         icon: Icons.qr_code_rounded,
-                        label: 'Donor card',
+                        label: _copy('donorCard'),
                         onTap: () =>
                             Navigator.pushNamed(context, AppRoutes.donorCard),
                       ),
                       _Divider(scheme: scheme),
                       _Row(
                         icon: Icons.monitor_heart_outlined,
-                        label: 'Medical summary',
-                        onTap: () => _showInfoSheet(
-                          title: 'Medical summary',
-                          icon: Icons.monitor_heart_outlined,
-                          message:
-                              'Your blood group, eligibility, donation count, and next eligible date are shown across the home, donor card, and history screens.',
-                          actionLabel: 'View donor card',
-                          onAction: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(context, AppRoutes.donorCard);
-                          },
-                        ),
+                        label: _copy('medicalSummary'),
+                        onTap: () => _showMedicalSummary(user),
                       ),
                       _Divider(scheme: scheme),
                       _Row(
                         icon: Icons.contact_emergency_outlined,
-                        label: 'Emergency contact',
+                        label: _copy('emergencyContact'),
                         onTap: () => _showInfoSheet(
                           title: 'Emergency contact',
                           icon: Icons.contact_emergency_outlined,
@@ -239,7 +413,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                const SectionHeader('Notifications'),
+                SectionHeader(_copy('notifications')),
                 AppCard(
                   padding: EdgeInsets.zero,
                   child: Column(
@@ -250,8 +424,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           setState(() => _push = v);
                           _updatePreference('push_notifications_enabled', v);
                         },
-                        title: const Text('Push notifications'),
-                        subtitle: const Text('Appointments and urgent alerts'),
+                        title: Text(_copy('pushNotifications')),
                       ),
                       _Divider(scheme: scheme),
                       SwitchListTile.adaptive(
@@ -260,44 +433,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           setState(() => _sms = v);
                           _updatePreference('sms_reminders_enabled', v);
                         },
-                        title: const Text('SMS reminders'),
-                        subtitle: const Text('7, 3, 1 day reminders'),
-                      ),
-                      _Divider(scheme: scheme),
-                      SwitchListTile.adaptive(
-                        value: _shareAnon,
-                        onChanged: (v) {
-                          setState(() => _shareAnon = v);
-                          _updatePreference('share_anonymized_data', v);
-                        },
-                        title: const Text('Share anonymized data'),
-                        subtitle: const Text(
-                          'Helps NBTS planning and donor safety',
-                        ),
+                        title: Text(_copy('smsReminders')),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                const SectionHeader('Appearance'),
+                SectionHeader(_copy('appearance')),
                 ValueListenableBuilder<ThemeMode>(
                   valueListenable: ThemeController.mode,
                   builder: (context, mode, _) => SegmentedButton<ThemeMode>(
-                    segments: const [
+                    segments: [
                       ButtonSegment(
                         value: ThemeMode.light,
-                        label: Text('Light'),
-                        icon: Icon(Icons.light_mode_outlined),
+                        label: Text(_copy('light')),
+                        icon: const Icon(Icons.light_mode_outlined),
                       ),
                       ButtonSegment(
                         value: ThemeMode.dark,
-                        label: Text('Dark'),
-                        icon: Icon(Icons.dark_mode_outlined),
+                        label: Text(_copy('dark')),
+                        icon: const Icon(Icons.dark_mode_outlined),
                       ),
                       ButtonSegment(
                         value: ThemeMode.system,
-                        label: Text('System'),
-                        icon: Icon(Icons.brightness_auto_outlined),
+                        label: Text(_copy('system')),
+                        icon: const Icon(Icons.brightness_auto_outlined),
                       ),
                     ],
                     selected: {mode},
@@ -305,9 +465,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                const SectionHeader('Language'),
+                SectionHeader(_copy('language')),
                 SegmentedButton<String>(
-                  segments: const [
+                  segments: [
                     ButtonSegment(value: 'English', label: Text('English')),
                     ButtonSegment(value: 'Swahili', label: Text('Swahili')),
                   ],
@@ -315,14 +475,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onSelectionChanged: (v) => _updateLanguage(v.first),
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                const SectionHeader('Support'),
+                SectionHeader(_copy('support')),
                 AppCard(
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
                       _Row(
                         icon: Icons.help_outline_rounded,
-                        label: 'FAQ and donor guide',
+                        label: _copy('faq'),
                         onTap: () => _showInfoSheet(
                           title: 'FAQ and donor guide',
                           icon: Icons.help_outline_rounded,
@@ -333,7 +493,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _Divider(scheme: scheme),
                       _Row(
                         icon: Icons.chat_bubble_outline_rounded,
-                        label: 'Contact NBTS support',
+                        label: _copy('contactSupport'),
                         onTap: () => _showInfoSheet(
                           title: 'Contact NBTS support',
                           icon: Icons.chat_bubble_outline_rounded,
@@ -349,7 +509,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _Divider(scheme: scheme),
                       _Row(
                         icon: Icons.privacy_tip_outlined,
-                        label: 'Account and privacy',
+                        label: _copy('privacy'),
                         onTap: () => _showInfoSheet(
                           title: 'Account and privacy',
                           icon: Icons.privacy_tip_outlined,
@@ -364,7 +524,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 OutlinedButton.icon(
                   onPressed: _signOut,
                   icon: const Icon(Icons.logout_rounded),
-                  label: const Text('Sign out'),
+                  label: Text(_copy('signOut')),
                 ),
               ],
             ),
@@ -376,10 +536,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.scheme, required this.user});
+  const _Header({
+    required this.scheme,
+    required this.user,
+    required this.uploadingPhoto,
+    required this.onPhotoTap,
+  });
 
   final ColorScheme scheme;
   final User? user;
+  final bool uploadingPhoto;
+  final VoidCallback? onPhotoTap;
 
   @override
   Widget build(BuildContext context) {
@@ -389,18 +556,13 @@ class _Header extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHigh,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.person_outline_rounded,
-                  color: scheme.onSurfaceVariant,
-                ),
+              _ProfileAvatar(
+                scheme: scheme,
+                photoUrl:
+                    user?.photoUrl ??
+                    firebase_auth.FirebaseAuth.instance.currentUser?.photoURL,
+                uploading: uploadingPhoto,
+                onTap: onPhotoTap,
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -418,7 +580,7 @@ class _Header extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'NBTS ID',
+                      context.t('profile.nbtsId'),
                       style: TextStyle(
                         color: scheme.onSurfaceVariant,
                         fontSize: 10,
@@ -428,7 +590,10 @@ class _Header extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _text(user?.donorId, fallback: 'Pending'),
+                      _text(
+                        user?.donorId,
+                        fallback: context.t('common.pending'),
+                      ),
                       style: TextStyle(
                         color: scheme.onSurfaceVariant,
                         fontSize: 12,
@@ -445,19 +610,22 @@ class _Header extends StatelessWidget {
           Row(
             children: [
               _Metric(
-                label: 'Blood',
-                value: _text(user?.bloodGroup, fallback: 'Pending'),
+                label: context.t('profile.blood'),
+                value: _text(
+                  user?.bloodGroup,
+                  fallback: context.t('common.pending'),
+                ),
                 scheme: scheme,
               ),
               const SizedBox(width: AppSpacing.lg),
               _Metric(
-                label: 'Donations',
+                label: context.t('dashboard.donations'),
                 value: '${user?.totalDonations ?? 0}',
                 scheme: scheme,
               ),
               const SizedBox(width: AppSpacing.lg),
               _Metric(
-                label: 'Donor points',
+                label: context.t('profile.donorPoints'),
                 value: '${user?.loyaltyPoints ?? 0}',
                 scheme: scheme,
               ),
@@ -471,6 +639,109 @@ class _Header extends StatelessWidget {
   static String _text(String? value, {required String fallback}) {
     if (value == null || value.trim().isEmpty) return fallback;
     return value;
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({
+    required this.scheme,
+    required this.photoUrl,
+    required this.uploading,
+    required this.onTap,
+  });
+
+  final ColorScheme scheme;
+  final String? photoUrl;
+  final bool uploading;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPhoto = photoUrl != null && photoUrl!.trim().isNotEmpty;
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CircleAvatar(
+            radius: 34,
+            backgroundColor: scheme.surfaceContainerHigh,
+            backgroundImage: hasPhoto ? NetworkImage(photoUrl!) : null,
+            child: uploading
+                ? SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: scheme.primary,
+                    ),
+                  )
+                : hasPhoto
+                ? null
+                : Icon(
+                    Icons.person_outline_rounded,
+                    color: scheme.onSurfaceVariant,
+                    size: 30,
+                  ),
+          ),
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: scheme.surface, width: 2),
+              ),
+              child: Icon(
+                Icons.camera_alt_rounded,
+                size: 13,
+                color: scheme.onPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryLine extends StatelessWidget {
+  const _SummaryLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -549,6 +820,25 @@ class _Divider extends StatelessWidget {
   }
 }
 
+String? _formatDate(DateTime? date) {
+  if (date == null) return null;
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${months[date.month - 1]} ${date.day}, ${date.year}';
+}
+
 String? _languageLabel(String? value) {
   final normalized = value?.toLowerCase().trim();
   return switch (normalized) {
@@ -557,3 +847,5 @@ String? _languageLabel(String? value) {
     _ => null,
   };
 }
+
+

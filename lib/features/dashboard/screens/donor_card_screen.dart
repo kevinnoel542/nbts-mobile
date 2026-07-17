@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:flutter/services.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
@@ -39,7 +40,7 @@ class _DonorCardScreenState extends State<DonorCardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Donor card'),
+        title: Text(context.t('donorCard.title')),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -56,7 +57,7 @@ Blood group: ${card.bloodGroup ?? 'Pending'}
               await Clipboard.setData(ClipboardData(text: text.trim()));
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Donor card details copied.')),
+                SnackBar(content: Text(context.t('donorCard.copied'))),
               );
             },
           ),
@@ -111,27 +112,27 @@ Blood group: ${card.bloodGroup ?? 'Pending'}
                     children: [
                       InfoRow(
                         icon: Icons.event_available_outlined,
-                        label: 'Next eligible',
+                        label: context.t('dashboard.nextEligible'),
                         value:
                             _formatDate(card.nextEligibleDate) ??
-                            'Pending medical verification',
+                            context.t('common.pendingMedical'),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       InfoRow(
                         icon: Icons.place_outlined,
-                        label: 'Home center',
+                        label: context.t('donorCard.homeCenter'),
                         value: _text(
                           card.preferredCenter,
-                          fallback: 'No center selected',
+                          fallback: context.t('common.pending'),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       InfoRow(
                         icon: Icons.update_rounded,
-                        label: 'QR expires',
+                        label: context.t('donorCard.qrExpires'),
                         value:
                             _formatDateTime(card.qrExpiresAt) ??
-                            'Refresh daily',
+                            context.t('common.refresh'),
                       ),
                     ],
                   ),
@@ -154,77 +155,170 @@ class _IdentityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final verified = card.bloodGroupVerified == true;
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.water_drop_rounded, size: 18, color: scheme.primary),
-              const SizedBox(width: 6),
-              Text(
-                'NBTS donor',
-                style: TextStyle(
-                  color: scheme.onSurfaceVariant,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.6,
-                ),
-              ),
-              const Spacer(),
-              StatusPill(
-                label: verified ? 'Verified' : 'Unverified',
-                icon: verified
-                    ? Icons.verified_outlined
-                    : Icons.pending_outlined,
-                kind: verified ? StatusKind.success : StatusKind.warning,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            _text(card.name, fallback: 'Donor profile pending'),
-            style: TextStyle(
-              color: scheme.onSurface,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.4,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            card.donorId,
-            style: TextStyle(
-              color: scheme.onSurfaceVariant,
-              fontSize: 13,
-              fontFamily: 'monospace',
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Row(
-            children: [
-              _MiniField(
-                label: 'Blood',
-                value: _text(card.bloodGroup, fallback: 'Pending'),
-                scheme: scheme,
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              _MiniField(
-                label: 'Donations',
-                value: '${card.totalDonations ?? 0}',
-                scheme: scheme,
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              _MiniField(
-                label: 'Tier',
-                value: _text(card.loyaltyTier, fallback: 'Pending'),
-                scheme: scheme,
-              ),
-            ],
+    final isDark = scheme.brightness == Brightness.dark;
+    final bg = _text(card.bloodGroup, fallback: '--');
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF201315), const Color(0xFF101010)]
+              : [const Color(0xFFFFF7F7), Colors.white],
+        ),
+        border: Border.all(
+          color: scheme.primary.withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.primary.withValues(alpha: isDark ? 0.18 : 0.10),
+            blurRadius: 26,
+            offset: const Offset(0, 16),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: scheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.26),
+                      width: 3,
+                    ),
+                  ),
+                  child: Text(
+                    bg,
+                    style: TextStyle(
+                      color: scheme.onPrimary,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.water_drop_rounded,
+                            size: 16,
+                            color: scheme.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            context.t('donorCard.digital'),
+                            style: TextStyle(
+                              color: scheme.onSurfaceVariant,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _text(
+                          card.name,
+                          fallback: context.t('dashboard.welcomeDonor'),
+                        ),
+                        style: TextStyle(
+                          color: scheme.onSurface,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.4,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        context.t('profile.nbtsId'),
+                        style: TextStyle(
+                          color: scheme.onSurfaceVariant,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.9,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        card.donorId,
+                        style: TextStyle(
+                          color: scheme.onSurface,
+                          fontSize: 13,
+                          fontFamily: 'monospace',
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            StatusPill(
+              label: verified
+                  ? context.t('donorCard.bloodVerified')
+                  : context.t('common.pendingMedical'),
+              icon: verified ? Icons.verified_outlined : Icons.pending_outlined,
+              kind: verified ? StatusKind.success : StatusKind.warning,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: scheme.surface.withValues(alpha: isDark ? 0.32 : 0.70),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: scheme.outlineVariant),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _MiniField(
+                      label: context.t('dashboard.donations'),
+                      value: '${card.totalDonations ?? 0}',
+                      scheme: scheme,
+                    ),
+                  ),
+                  Expanded(
+                    child: _MiniField(
+                      label: context.t('profile.donorPoints'),
+                      value: '${card.loyaltyPoints ?? 0}',
+                      scheme: scheme,
+                    ),
+                  ),
+                  Expanded(
+                    child: _MiniField(
+                      label: 'Tier',
+                      value: _text(
+                        card.loyaltyTier,
+                        fallback: context.t('common.pending'),
+                      ),
+                      scheme: scheme,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -282,7 +376,7 @@ class _QrPanel extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Express check-in',
+            context.t('donorCard.qrTitle'),
             style: TextStyle(
               color: scheme.onSurface,
               fontSize: 16,
@@ -292,7 +386,7 @@ class _QrPanel extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Show this code at any NBTS center.',
+            context.t('donorCard.qrSubtitle'),
             style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -306,7 +400,7 @@ class _QrPanel extends StatelessWidget {
             child: QrImageView(
               data: card.qrPayloadText,
               version: QrVersions.auto,
-              size: 180,
+              size: 220,
               backgroundColor: Colors.white,
               eyeStyle: const QrEyeStyle(
                 eyeShape: QrEyeShape.square,

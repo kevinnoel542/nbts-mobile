@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/appointment.dart';
@@ -215,8 +216,8 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       appBar: AppBar(
         title: Text(
           _rescheduleAppointment == null
-              ? 'Book donation'
-              : 'Reschedule donation',
+              ? context.t('book.title')
+              : context.t('book.rescheduleTitle'),
         ),
       ),
       body: ListView(
@@ -227,7 +228,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
           AppSpacing.lg,
         ),
         children: [
-          const _Step(number: '1', title: 'Center'),
+          _Step(number: '1', title: context.t('book.center')),
           const SizedBox(height: AppSpacing.sm),
           _CenterPicker(
             selectedCenter: _selectedCenter,
@@ -237,7 +238,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
             onChanged: _handleCenterChanged,
           ),
           const SizedBox(height: AppSpacing.xl),
-          const _Step(number: '2', title: 'Date'),
+          _Step(number: '2', title: context.t('book.date')),
           const SizedBox(height: AppSpacing.sm),
           _DatePickerStrip(
             selectedDate: _selectedDate,
@@ -245,7 +246,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
             onChanged: _handleDateChanged,
           ),
           const SizedBox(height: AppSpacing.xl),
-          const _Step(number: '3', title: 'Time'),
+          _Step(number: '3', title: context.t('book.time')),
           const SizedBox(height: AppSpacing.sm),
           _SlotSection(
             slotsFuture: _slotsFuture,
@@ -322,10 +323,10 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                   )
                 : Text(
                     _selectedSlot == null
-                        ? 'Select a time'
+                        ? context.t('book.selectTime')
                         : _rescheduleAppointment == null
-                        ? 'Confirm appointment'
-                        : 'Save appointment',
+                        ? context.t('book.confirm')
+                        : context.t('book.save'),
                   ),
           ),
         ],
@@ -381,7 +382,7 @@ class _CenterPicker extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: submitting ? null : () => onRefresh(),
                   icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Retry'),
+                  label: Text(context.t('book.retry')),
                 ),
               ],
             ),
@@ -402,7 +403,7 @@ class _CenterPicker extends StatelessWidget {
               labelText: 'Donation center',
               prefixIcon: Icon(Icons.place_outlined),
             ),
-            hint: const Text('Choose center'),
+            hint: Text(context.t('book.chooseCenter')),
             items: [
               for (final center in centers)
                 DropdownMenuItem(
@@ -637,7 +638,7 @@ class _SlotSection extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: submitting ? null : onRetry,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Retry'),
+                  label: Text(context.t('book.retry')),
                 ),
               ],
             ),

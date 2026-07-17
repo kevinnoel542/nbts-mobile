@@ -20,17 +20,18 @@ class DonationRecord {
   final String? donationType;
 
   factory DonationRecord.fromJson(Map<String, dynamic> json) {
-    final center = readObject(json, 'blood_center') ?? readObject(json, 'center');
+    final center =
+        readObject(json, 'blood_center') ?? readObject(json, 'center');
     return DonationRecord(
       id: readInt(json, ['id', 'donation_id']) ?? 0,
-      date: readDate(
-        json,
-        ['donated_at', 'donation_date', 'date', 'created_at'],
-      ),
-      centerName: readString(
-            json,
-            ['center_name', 'center_name_text', 'location'],
-          ) ??
+      date: readDate(json, [
+        'donated_at',
+        'donation_date',
+        'date',
+        'created_at',
+      ]),
+      centerName:
+          readString(json, ['center_name', 'center_name_text', 'location']) ??
           readString(center, ['name', 'center_name', 'title']),
       bloodType: readString(json, ['blood_type', 'blood_group', 'type']),
       volumeMl: readInt(json, ['volume_ml', 'volume', 'amount_ml']),

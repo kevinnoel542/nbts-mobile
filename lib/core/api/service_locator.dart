@@ -28,16 +28,21 @@ class Services {
   late final ProfileRepository profile = ProfileRepository(api: api);
   late final CentersRepository centers = CentersRepository(api: api);
   late final DonationsRepository donations = DonationsRepository(api: api);
-  late final AppointmentsRepository appointments =
-      AppointmentsRepository(api: api);
+  late final AppointmentsRepository appointments = AppointmentsRepository(
+    api: api,
+  );
   late final CampaignsRepository campaigns = CampaignsRepository(api: api);
   late final ArticlesRepository articles = ArticlesRepository(api: api);
   late final DonorCardRepository donorCard = DonorCardRepository(api: api);
-  late final EligibilityRepository eligibility = EligibilityRepository(api: api);
-  late final NotificationsRepository notifications =
-      NotificationsRepository(api: api);
-  late final NotificationService notificationService =
-      NotificationService(notifications: notifications);
+  late final EligibilityRepository eligibility = EligibilityRepository(
+    api: api,
+  );
+  late final NotificationsRepository notifications = NotificationsRepository(
+    api: api,
+  );
+  late final NotificationService notificationService = NotificationService(
+    notifications: notifications,
+  );
 
   Future<void>? _initFuture;
 
@@ -50,5 +55,3 @@ class Services {
     unawaited(notificationService.init(authenticated: tokens.isAuthenticated));
   }
 }
-
-

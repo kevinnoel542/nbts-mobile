@@ -85,6 +85,34 @@ class ApiClient {
     );
   }
 
+  Future<dynamic> multipartPost(
+    String path, {
+    required String fileField,
+    required File file,
+    Map<String, String>? fields,
+    Map<String, String>? headers,
+    bool authenticated = true,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', ApiConfig.endpoint(path));
+      request.headers.addAll(_headers(headers, authenticated));
+      request.headers.remove('Content-Type');
+      if (fields != null) request.fields.addAll(fields);
+      request.files.add(
+        await http.MultipartFile.fromPath(fileField, file.path),
+      );
+      final streamed = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamed);
+      return _decode(response);
+    } on TimeoutException {
+      throw const ApiException('Request timed out. Check your connection.');
+    } on SocketException catch (e) {
+      throw ApiException('Cannot reach server. ${e.message}');
+    } on http.ClientException catch (e) {
+      throw ApiException('Network error: ${e.message}');
+    }
+  }
+
   Future<dynamic> delete(
     String path, {
     Map<String, String>? headers,

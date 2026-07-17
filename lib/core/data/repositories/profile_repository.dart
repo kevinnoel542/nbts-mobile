@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/data/models/json_utils.dart';
 import 'package:nbts/core/data/models/user.dart';
@@ -20,6 +21,19 @@ class ProfileRepository {
     final payload = readObjectPayload(response);
     if (payload == null) {
       throw const ApiException('Unexpected profile payload');
+    }
+    return User.fromJson(payload);
+  }
+
+  Future<User> updatePhoto(File file) async {
+    final response = await _api.multipartPost(
+      '/profile/photo',
+      fileField: 'photo',
+      file: file,
+    );
+    final payload = readObjectPayload(response);
+    if (payload == null) {
+      throw const ApiException('Unexpected profile photo payload');
     }
     return User.fromJson(payload);
   }

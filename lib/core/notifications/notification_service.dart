@@ -15,7 +15,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class NotificationService {
   NotificationService({required NotificationsRepository notifications})
-      : _notifications = notifications;
+    : _notifications = notifications;
 
   static const _nativeNotifications = MethodChannel('nbts/notifications');
 
@@ -33,11 +33,9 @@ class NotificationService {
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
       _firebaseReady = true;
 
-      await _messaging!.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      ).timeout(const Duration(seconds: 8));
+      await _messaging!
+          .requestPermission(alert: true, badge: true, sound: true)
+          .timeout(const Duration(seconds: 8));
 
       await _messaging!.setForegroundNotificationPresentationOptions(
         alert: true,
@@ -62,13 +60,10 @@ class NotificationService {
       final messaging = _messaging;
       if (messaging == null) return;
       final token = await messaging.getToken().timeout(
-            const Duration(seconds: 8),
-          );
-      if (token == null || token.isEmpty) return;
-      await _notifications.registerToken(
-        token: token,
-        deviceType: _deviceType,
+        const Duration(seconds: 8),
       );
+      if (token == null || token.isEmpty) return;
+      await _notifications.registerToken(token: token, deviceType: _deviceType);
     } catch (e) {
       debugPrint('Could not register notification token: $e');
     }
@@ -112,10 +107,7 @@ class NotificationService {
     if (messaging == null) return;
     _tokenRefreshSub ??= messaging.onTokenRefresh.listen((token) async {
       if (token.isEmpty) return;
-      await _notifications.registerToken(
-        token: token,
-        deviceType: _deviceType,
-      );
+      await _notifications.registerToken(token: token, deviceType: _deviceType);
     });
   }
 
@@ -124,4 +116,3 @@ class NotificationService {
     return 'android';
   }
 }
-

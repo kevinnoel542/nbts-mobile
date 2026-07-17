@@ -13,14 +13,8 @@ void showInAppNotification({required String title, required String body}) {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          if (body.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(body),
-          ],
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+          if (body.isNotEmpty) ...[const SizedBox(height: 4), Text(body)],
         ],
       ),
       duration: const Duration(seconds: 5),

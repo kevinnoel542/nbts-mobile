@@ -8,9 +8,9 @@ class NotificationsRepository {
 
   Future<List<UserNotification>> fetchAll() async {
     final response = await _api.get('/notifications');
-    return readListPayload(response)
-        .map(UserNotification.fromJson)
-        .toList(growable: false);
+    return readListPayload(
+      response,
+    ).map(UserNotification.fromJson).toList(growable: false);
   }
 
   Future<int> unreadCount() async {
@@ -34,12 +34,13 @@ class NotificationsRepository {
     required String deviceType,
   }) async {
     try {
-      await _api.post('/notifications/register-token', body: {
-        'token': token,
-        'device_type': deviceType,
-      });
+      await _api.post(
+        '/notifications/register-token',
+        body: {'token': token, 'device_type': deviceType},
+      );
     } on ApiException catch (e) {
-      final duplicateToken = e.isValidation &&
+      final duplicateToken =
+          e.isValidation &&
           (e.errors?.containsKey('token') ?? false) &&
           e.firstError('token').toLowerCase().contains('already');
       if (!duplicateToken) rethrow;

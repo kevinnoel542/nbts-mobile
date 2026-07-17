@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 class ThemeController {
   ThemeController._();
 
-  static final ValueNotifier<ThemeMode> mode =
-      ValueNotifier<ThemeMode>(ThemeMode.system);
+  static final ValueNotifier<ThemeMode> mode = ValueNotifier<ThemeMode>(
+    ThemeMode.system,
+  );
 
   static void set(ThemeMode value) => mode.value = value;
 

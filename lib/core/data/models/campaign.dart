@@ -7,6 +7,8 @@ class Campaign {
     this.summary,
     this.category,
     this.bloodType,
+    this.centerId,
+    this.centerName,
     this.startsAt,
     this.endsAt,
     this.urgent,
@@ -17,6 +19,8 @@ class Campaign {
   final String? summary;
   final String? category;
   final String? bloodType;
+  final int? centerId;
+  final String? centerName;
   final DateTime? startsAt;
   final DateTime? endsAt;
   final bool? urgent;
@@ -25,12 +29,11 @@ class Campaign {
     return Campaign(
       id: readInt(json, ['id', 'campaign_id']) ?? 0,
       title: readString(json, ['title', 'name', 'heading']) ?? 'Campaign',
-      summary: readString(
-        json,
-        ['summary', 'description', 'body', 'message'],
-      ),
+      summary: readString(json, ['summary', 'description', 'body', 'message']),
       category: readString(json, ['category', 'type', 'tag']),
       bloodType: readString(json, ['blood_type', 'blood_group']),
+      centerId: readInt(json, ['center_id', 'blood_center_id']),
+      centerName: readString(json, ['center_name', 'blood_center_name']),
       startsAt: readDate(json, ['starts_at', 'start_date', 'begin_at']),
       endsAt: readDate(json, ['ends_at', 'end_date', 'expires_at']),
       urgent: readBool(json, ['urgent', 'is_urgent', 'priority_urgent']),

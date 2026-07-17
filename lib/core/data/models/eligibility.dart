@@ -21,10 +21,10 @@ class Eligibility {
       eligible: readBool(json, ['eligible']) ?? false,
       message: readString(json, ['message']) ?? 'Eligibility pending.',
       reasons: readStringList(json, ['reasons']),
-      nextEligibleDate: readDate(
-        json,
-        ['next_eligible_donation_date', 'next_eligible_date'],
-      ),
+      nextEligibleDate: readDate(json, [
+        'next_eligible_donation_date',
+        'next_eligible_date',
+      ]),
     );
   }
 }

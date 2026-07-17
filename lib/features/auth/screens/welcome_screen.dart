@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/routes/app_routes.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -17,7 +18,11 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.water_drop_rounded, color: scheme.primary, size: 22),
+                  Icon(
+                    Icons.water_drop_rounded,
+                    color: scheme.primary,
+                    size: 22,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'NBTS',
@@ -32,7 +37,7 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const Spacer(flex: 2),
               Text(
-                'Donate blood.',
+                context.t('welcome.title1'),
                 style: TextStyle(
                   color: scheme.onSurface,
                   fontSize: 40,
@@ -42,7 +47,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                'Save lives.',
+                context.t('welcome.title2'),
                 style: TextStyle(
                   color: scheme.primary,
                   fontSize: 40,
@@ -53,7 +58,7 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Book donation appointments, track your donor profile, and carry your secure NBTS donor card.',
+                context.t('welcome.subtitle'),
                 style: TextStyle(
                   color: scheme.onSurfaceVariant,
                   fontSize: 15,
@@ -61,32 +66,34 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 34),
-              const _Feature(
+              _Feature(
                 icon: Icons.person_outline_rounded,
-                text: 'Create and manage your donor profile',
+                text: context.t('welcome.feature.profile'),
               ),
-              const _Feature(
+              _Feature(
                 icon: Icons.event_available_outlined,
-                text: 'Book and view donation appointments',
+                text: context.t('welcome.feature.appointments'),
               ),
-              const _Feature(
+              _Feature(
                 icon: Icons.qr_code_rounded,
-                text: 'Carry your secure digital donor card',
+                text: context.t('welcome.feature.card'),
               ),
               const Spacer(flex: 3),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
-                  child: const Text('Sign in'),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.login),
+                  child: Text(context.t('auth.signIn')),
                 ),
               ),
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-                  child: const Text('Create an account'),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.register),
+                  child: Text(context.t('auth.createAccount')),
                 ),
               ),
             ],
@@ -127,4 +134,3 @@ class _Feature extends StatelessWidget {
     );
   }
 }
-

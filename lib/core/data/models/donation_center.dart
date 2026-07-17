@@ -29,21 +29,26 @@ class DonationCenter {
     return DonationCenter(
       id: readInt(json, ['id', 'center_id']) ?? 0,
       name: readString(json, ['name', 'center_name', 'title']) ?? 'Center',
-      address: readString(
-        json,
-        ['address', 'location', 'full_address', 'street'],
-      ),
+      address: readString(json, [
+        'address',
+        'location',
+        'full_address',
+        'street',
+      ]),
       distanceKm: readDouble(json, ['distance_km', 'distance']),
-      hours: readString(
-        json,
-        ['hours', 'opening_hours', 'working_hours', 'open_hours'],
-      ),
+      hours: readString(json, [
+        'hours',
+        'opening_hours',
+        'working_hours',
+        'open_hours',
+      ]),
       phone: readString(json, ['phone', 'phone_number', 'contact']),
       waitTime: readString(json, ['wait_time', 'estimated_wait']),
-      capacityLabel: readString(
-        json,
-        ['capacity_label', 'capacity', 'availability'],
-      ),
+      capacityLabel: readString(json, [
+        'capacity_label',
+        'capacity',
+        'availability',
+      ]),
       services: readStringList(json, ['services', 'service_list']),
       isOpen: readBool(json, ['is_open', 'open', 'status_open']),
     );

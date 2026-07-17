@@ -6,12 +6,17 @@ class User {
     required this.name,
     this.email,
     this.phone,
+    this.photoUrl,
     this.bloodGroup,
     this.gender,
     this.region,
     this.dateOfBirth,
     this.donorId,
     this.preferredCenter,
+    this.preferredCenterId,
+    this.address,
+    this.emergencyContactName,
+    this.emergencyContactPhone,
     this.loyaltyTier,
     this.loyaltyPoints,
     this.totalDonations,
@@ -20,7 +25,6 @@ class User {
     this.profileComplete,
     this.pushNotificationsEnabled,
     this.smsRemindersEnabled,
-    this.shareAnonymizedData,
     this.language,
   });
 
@@ -28,12 +32,17 @@ class User {
   final String name;
   final String? email;
   final String? phone;
+  final String? photoUrl;
   final String? bloodGroup;
   final String? gender;
   final String? region;
   final DateTime? dateOfBirth;
   final String? donorId;
   final String? preferredCenter;
+  final int? preferredCenterId;
+  final String? address;
+  final String? emergencyContactName;
+  final String? emergencyContactPhone;
   final String? loyaltyTier;
   final int? loyaltyPoints;
   final int? totalDonations;
@@ -42,7 +51,6 @@ class User {
   final bool? profileComplete;
   final bool? pushNotificationsEnabled;
   final bool? smsRemindersEnabled;
-  final bool? shareAnonymizedData;
   final String? language;
 
   bool get hasRequiredDonorFields =>
@@ -65,6 +73,19 @@ class User {
       phone:
           readString(json, ['phone', 'phone_number', 'mobile']) ??
           readString(profile, ['phone', 'phone_number', 'mobile']),
+      photoUrl:
+          readString(json, [
+            'photo_url',
+            'profile_photo_url',
+            'avatar_url',
+            'picture',
+          ]) ??
+          readString(profile, [
+            'photo_url',
+            'profile_photo_url',
+            'avatar_url',
+            'picture',
+          ]),
       bloodGroup:
           readString(json, ['blood_group', 'blood_type', 'bloodGroup']) ??
           readString(profile, ['blood_group', 'blood_type', 'bloodGroup']),
@@ -80,11 +101,29 @@ class User {
       donorId:
           readString(json, ['donor_id', 'donorId', 'nbts_id']) ??
           readString(profile, ['donor_id', 'donorId', 'nbts_id']),
-      preferredCenter: readString(json, [
-        'preferred_center',
-        'preferred_center_name',
-        'center',
-      ]),
+      preferredCenter:
+          readString(json, [
+            'preferred_center',
+            'preferred_center_name',
+            'center',
+          ]) ??
+          readString(profile, [
+            'preferred_center',
+            'preferred_center_name',
+            'center',
+          ]),
+      preferredCenterId:
+          readInt(json, ['preferred_center_id', 'center_id']) ??
+          readInt(profile, ['preferred_center_id', 'center_id']),
+      address:
+          readString(json, ['address', 'physical_address']) ??
+          readString(profile, ['address', 'physical_address']),
+      emergencyContactName:
+          readString(json, ['emergency_contact_name', 'emergency_name']) ??
+          readString(profile, ['emergency_contact_name', 'emergency_name']),
+      emergencyContactPhone:
+          readString(json, ['emergency_contact_phone', 'emergency_phone']) ??
+          readString(profile, ['emergency_contact_phone', 'emergency_phone']),
       loyaltyTier: readString(json, ['loyalty_tier', 'tier']),
       loyaltyPoints: readInt(json, ['loyalty_points', 'points']),
       totalDonations:
@@ -135,9 +174,7 @@ class User {
       smsRemindersEnabled:
           readBool(json, ['sms_reminders_enabled', 'sms_reminders']) ??
           readBool(profile, ['sms_reminders_enabled', 'sms_reminders']),
-      shareAnonymizedData:
-          readBool(json, ['share_anonymized_data']) ??
-          readBool(profile, ['share_anonymized_data']),
+
       language:
           readString(json, ['language', 'locale']) ??
           readString(profile, ['language', 'locale']),

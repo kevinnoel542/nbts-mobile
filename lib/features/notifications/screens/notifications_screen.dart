@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/user_notification.dart';
@@ -38,9 +39,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await _refresh();
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.firstError())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.firstError())));
     }
   }
 
@@ -68,9 +69,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             Text(
               notification.title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(notification.body),
@@ -79,7 +80,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               alignment: Alignment.centerRight,
               child: FilledButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Done'),
+                child: Text(context.t('common.done')),
               ),
             ),
           ],
@@ -93,11 +94,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(context.t('notifications.title')),
         actions: [
           TextButton(
             onPressed: _markAllRead,
-            child: const Text('Mark read'),
+            child: Text(context.t('notifications.markRead')),
           ),
           const SizedBox(width: 4),
         ],
@@ -121,7 +122,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 children: [
                   EmptyState(
                     icon: Icons.notifications_off_outlined,
-                    title: 'Notifications unavailable',
+                    title: context.t('notifications.unavailable'),
                     message: message,
                   ),
                 ],
@@ -147,7 +148,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     child: EmptyState(
                       icon: Icons.notifications_none_rounded,
                       title: 'No notifications yet',
-                      message: 'NBTS alerts, appointments, and campaign updates will appear here.',
+                      message:
+                          'NBTS alerts, appointments, and campaign updates will appear here.',
                     ),
                   )
                 else
@@ -213,7 +215,9 @@ class _NotificationTile extends StatelessWidget {
                         style: TextStyle(
                           color: scheme.onSurface,
                           fontSize: 15,
-                          fontWeight: unread ? FontWeight.w700 : FontWeight.w600,
+                          fontWeight: unread
+                              ? FontWeight.w700
+                              : FontWeight.w600,
                         ),
                       ),
                     ),
@@ -253,7 +257,9 @@ class _NotificationTile extends StatelessWidget {
     final value = type?.toLowerCase() ?? '';
     if (value.contains('appointment')) return Icons.event_available_outlined;
     if (value.contains('campaign')) return Icons.campaign_outlined;
-    if (value.contains('stock') || value.contains('urgent')) return Icons.priority_high_rounded;
+    if (value.contains('stock') || value.contains('urgent')) {
+      return Icons.priority_high_rounded;
+    }
     return Icons.notifications_outlined;
   }
 }

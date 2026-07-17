@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/appointment.dart';
 import 'package:nbts/core/data/models/article.dart';
 import 'package:nbts/core/data/models/campaign.dart';
+import 'package:nbts/core/data/models/donation_center.dart';
 import 'package:nbts/core/data/models/eligibility.dart';
 import 'package:nbts/core/data/models/user.dart';
 import 'package:nbts/core/routes/app_routes.dart';
@@ -165,20 +167,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: AppSpacing.md),
                     _StatsRow(user: user),
                     const SizedBox(height: AppSpacing.xl),
-                    const SectionHeader('Quick actions'),
+                    SectionHeader(context.t('dashboard.quickActions')),
                     _QuickActions(),
                     const SizedBox(height: AppSpacing.xl),
                     _ImpactCard(scheme: scheme, user: user),
                     const SizedBox(height: AppSpacing.xl),
                     SectionHeader(
-                      'For you',
+                      context.t('dashboard.forYou'),
                       action: TextButton(
                         onPressed: () => _showForYouSheet(
                           context,
                           _campaignsFuture,
                           _articlesFuture,
                         ),
-                        child: const Text('See all'),
+                        child: Text(context.t('common.seeAll')),
                       ),
                     ),
                     FutureBuilder<List<Campaign>>(
@@ -266,12 +268,14 @@ class _Greeting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = user?.name.isNotEmpty == true ? user!.name : 'Welcome donor';
+    final name = user?.name.isNotEmpty == true
+        ? user!.name
+        : context.t('dashboard.welcomeDonor');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Welcome',
+          context.t('dashboard.welcome'),
           style: TextStyle(
             color: scheme.onSurfaceVariant,
             fontSize: 14,
@@ -313,9 +317,9 @@ class _EligibilityCard extends StatelessWidget {
     final dateText =
         eligibility?.message ??
         (nextDate == null
-            ? 'Pending medical verification'
+            ? context.t('common.pendingMedical')
             : isEligible
-            ? 'Eligible to donate'
+            ? context.t('dashboard.eligibleDonate')
             : 'Next eligible: ${_formatDate(nextDate)}');
 
     return AppCard(
@@ -324,14 +328,19 @@ class _EligibilityCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Eligibility',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  context.t('dashboard.eligibility'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               StatusPill(
-                label: isEligible ? 'Eligible' : 'Pending',
+                label: isEligible
+                    ? context.t('dashboard.eligible')
+                    : context.t('common.pending'),
                 icon: isEligible
                     ? Icons.check_circle_outline_rounded
                     : Icons.schedule_rounded,
@@ -357,7 +366,7 @@ class _EligibilityCard extends StatelessWidget {
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRoutes.bookAppointment),
                   icon: const Icon(Icons.calendar_today_rounded, size: 18),
-                  label: const Text('Book donation'),
+                  label: Text(context.t('dashboard.bookDonation')),
                 ),
               ),
               const SizedBox(width: 8),
@@ -365,7 +374,7 @@ class _EligibilityCard extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRoutes.donorCard),
-                  child: const Text('Donor card'),
+                  child: Text(context.t('dashboard.donorCard')),
                 ),
               ),
             ],
@@ -390,7 +399,7 @@ class _StatsRow extends StatelessWidget {
             child: StatTile(
               icon: Icons.water_drop_outlined,
               value: '${user?.totalDonations ?? 0}',
-              label: 'Donations',
+              label: context.t('dashboard.donations'),
             ),
           ),
         ),
@@ -402,7 +411,7 @@ class _StatsRow extends StatelessWidget {
               icon: Icons.local_drink_outlined,
               value: '${user?.totalVolumeMl ?? 0}',
               unit: 'mL',
-              label: 'Volume',
+              label: context.t('dashboard.volume'),
             ),
           ),
         ),
@@ -417,22 +426,22 @@ class _QuickActions extends StatelessWidget {
     final items = <_QuickActionData>[
       _QuickActionData(
         icon: Icons.place_outlined,
-        label: 'Find center',
+        label: context.t('dashboard.findCenter'),
         route: AppRoutes.centers,
       ),
       _QuickActionData(
         icon: Icons.history_rounded,
-        label: 'History',
+        label: context.t('nav.history'),
         route: AppRoutes.history,
       ),
       _QuickActionData(
         icon: Icons.qr_code_rounded,
-        label: 'Card',
+        label: context.t('dashboard.card'),
         route: AppRoutes.donorCard,
       ),
       _QuickActionData(
         icon: Icons.person_outline_rounded,
-        label: 'Profile',
+        label: context.t('nav.profile'),
         route: AppRoutes.profile,
       ),
     ];
@@ -891,7 +900,7 @@ void _showForYouSheet(
           ),
           children: [
             Text(
-              'For you',
+              context.t('dashboard.forYou'),
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -931,15 +940,32 @@ void _showForYouSheet(
 }
 
 void _showCampaignSheet(BuildContext context, Campaign campaign) {
+  final opensBooking = campaign.urgent == true || campaign.centerId != null;
   _showDetailSheet(
     context,
     title: campaign.title,
-    icon: Icons.campaign_outlined,
+    icon: campaign.urgent == true
+        ? Icons.priority_high_rounded
+        : Icons.campaign_outlined,
     body: campaign.summary ?? 'No campaign details provided yet.',
-    actionLabel: 'Find centers',
+    actionLabel: opensBooking ? 'Book donation' : 'Find centers',
     onAction: () {
       Navigator.pop(context);
-      Navigator.pushNamed(context, AppRoutes.centers);
+      if (campaign.centerId != null) {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.bookAppointment,
+          arguments: DonationCenter(
+            id: campaign.centerId!,
+            name: campaign.centerName ?? campaign.title,
+          ),
+        );
+        return;
+      }
+      Navigator.pushNamed(
+        context,
+        campaign.urgent == true ? AppRoutes.bookAppointment : AppRoutes.centers,
+      );
     },
   );
 }

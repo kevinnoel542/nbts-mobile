@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/routes/app_routes.dart';
@@ -212,7 +213,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: _submitting ? null : () => Navigator.pop(context),
         ),
-        title: const Text('Create account'),
+        title: Text(context.t('auth.createAccount')),
       ),
       body: SafeArea(
         child: Form(
@@ -226,7 +227,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             children: [
               Text(
-                'Donor registration',
+                context.t('auth.registerTitle'),
                 style: TextStyle(
                   color: scheme.onSurface,
                   fontSize: 24,
@@ -236,7 +237,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Tell us a bit about you to set up your NBTS donor profile.',
+                context.t('auth.registerSubtitle'),
                 style: TextStyle(
                   color: scheme.onSurfaceVariant,
                   fontSize: 14,
@@ -249,21 +250,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onProviderPressed: _startSocialAuth,
               ),
               const SizedBox(height: AppSpacing.xl),
-              _SectionLabel('Account'),
+              _SectionLabel(context.t('auth.account')),
               const SizedBox(height: 12),
               _Field(
                 controller: _nameController,
-                label: 'Full name',
+                label: context.t('auth.fullName'),
                 icon: Icons.person_outline,
                 errorText: _err('name'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? context.t('auth.required')
+                    : null,
                 enabled: !_submitting,
               ),
               const SizedBox(height: 12),
               _Field(
                 controller: _emailController,
-                label: 'Email (optional)',
+                label: context.t('auth.emailOptional'),
                 icon: Icons.mail_outline,
                 keyboardType: TextInputType.emailAddress,
                 errorText: _err('email'),
@@ -271,7 +273,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   final t = v?.trim() ?? '';
                   if (t.isEmpty) return null;
                   if (!t.contains('@') || !t.contains('.')) {
-                    return 'Enter a valid email';
+                    return context.t('auth.validEmail');
                   }
                   return null;
                 },
@@ -280,25 +282,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 12),
               _Field(
                 controller: _phoneController,
-                label: 'Phone',
+                label: context.t('auth.phone'),
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
                 hint: '+255 712 000 000',
                 errorText: _err('phone'),
                 validator: (v) => (v == null || v.trim().length < 9)
-                    ? 'Enter a valid phone'
+                    ? context.t('auth.validPhone')
                     : null,
                 enabled: !_submitting,
               ),
               const SizedBox(height: 12),
               _Field(
                 controller: _passwordController,
-                label: 'Password',
+                label: context.t('auth.password'),
                 icon: Icons.lock_outline_rounded,
                 obscureText: _obscure,
                 errorText: _err('password'),
                 validator: (v) => (v == null || v.length < 8)
-                    ? 'Use at least 8 characters'
+                    ? context.t('auth.passwordLength')
                     : null,
                 enabled: !_submitting,
                 suffix: IconButton(
@@ -311,12 +313,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
-              _SectionLabel('Donor profile'),
+              _SectionLabel(context.t('auth.donorProfile')),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _bloodGroup,
                 decoration: InputDecoration(
-                  labelText: 'Blood group',
+                  labelText: context.t('auth.bloodGroup'),
                   prefixIcon: const Icon(Icons.water_drop_outlined),
                   errorText: _err('blood_group'),
                 ),
@@ -331,7 +333,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               DropdownButtonFormField<String>(
                 initialValue: _gender,
                 decoration: InputDecoration(
-                  labelText: 'Gender',
+                  labelText: context.t('auth.gender'),
                   prefixIcon: const Icon(Icons.wc_outlined),
                   errorText: _err('gender'),
                 ),
@@ -347,7 +349,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 initialValue: _region,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: 'Region',
+                  labelText: context.t('auth.region'),
                   prefixIcon: const Icon(Icons.place_outlined),
                   errorText: _err('region'),
                 ),
@@ -364,13 +366,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 borderRadius: BorderRadius.circular(12),
                 child: InputDecorator(
                   decoration: InputDecoration(
-                    labelText: 'Date of birth',
+                    labelText: context.t('auth.dateOfBirth'),
                     prefixIcon: const Icon(Icons.cake_outlined),
                     errorText: _err('date_of_birth'),
                   ),
                   child: Text(
                     _dateOfBirth == null
-                        ? 'Select date'
+                        ? context.t('auth.selectDate')
                         : _formatDob(_dateOfBirth!),
                     style: TextStyle(
                       color: _dateOfBirth == null
@@ -389,8 +391,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     : (v) => setState(() => _accepted = v ?? false),
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
-                title: const Text(
-                  'I accept the Terms, Privacy Policy and health-data notice.',
+                title: Text(
+                  context.t('auth.terms'),
                   style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                 ),
               ),
@@ -443,7 +445,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2.4),
                       )
-                    : const Text('Create account'),
+                    : Text(context.t('auth.createAccount')),
               ),
               const SizedBox(height: AppSpacing.md),
               Center(
@@ -454,7 +456,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           context,
                           AppRoutes.login,
                         ),
-                  child: const Text('Already have an account?  Sign in'),
+                  child: Text(context.t('auth.haveAccount')),
                 ),
               ),
             ],

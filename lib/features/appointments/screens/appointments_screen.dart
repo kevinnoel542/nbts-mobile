@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/appointment.dart';
@@ -53,16 +54,16 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel appointment?'),
-        content: const Text('This appointment will be marked as cancelled.'),
+        title: Text(context.t('appointments.cancelTitle')),
+        content: Text(context.t('appointments.cancelMessage')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep'),
+            child: Text(context.t('appointments.keep')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cancel appointment'),
+            child: Text(context.t('appointments.cancelAppointment')),
           ),
         ],
       ),
@@ -72,9 +73,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     try {
       await Services.instance.appointments.cancel(appointment.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Appointment cancelled.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('appointments.cancelled'))),
+      );
       await _refresh();
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -89,7 +90,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Appointments'),
+        title: Text(context.t('appointments.title')),
       ),
       body: FutureBuilder<List<Appointment>>(
         future: _appointmentsFuture,
@@ -101,7 +102,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           if (listSnap.hasError) {
             final message = listSnap.error is ApiException
                 ? (listSnap.error as ApiException).message
-                : 'Could not load appointments.';
+                : context.t('appointments.unavailable');
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
@@ -110,7 +111,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 children: [
                   EmptyState(
                     icon: Icons.event_busy_outlined,
-                    title: 'Appointments unavailable',
+                    title: context.t('appointments.unavailable'),
                     message: message,
                   ),
                 ],
@@ -134,15 +135,14 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     AppSpacing.xxl + AppSpacing.lg,
                   ),
                   children: [
-                    const SectionHeader('Next appointment'),
+                    SectionHeader(context.t('appointments.next')),
                     if (upcoming == null)
                       AppCard(
                         padding: const EdgeInsets.all(AppSpacing.md),
-                        child: const EmptyState(
+                        child: EmptyState(
                           icon: Icons.event_busy_outlined,
-                          title: 'No appointment booked',
-                          message:
-                              'Book a donation to see your upcoming visit details here.',
+                          title: context.t('appointments.noneBooked'),
+                          message: context.t('appointments.noneBookedMessage'),
                         ),
                       )
                     else
@@ -166,20 +166,19 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                       ),
                       label: Text(
                         upcoming == null
-                            ? 'Book new donation'
-                            : 'Change appointment',
+                            ? context.t('appointments.bookNew')
+                            : context.t('appointments.change'),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    const SectionHeader('All appointments'),
+                    SectionHeader(context.t('appointments.all')),
                     if (appointments.isEmpty)
                       AppCard(
                         padding: const EdgeInsets.all(AppSpacing.md),
-                        child: const EmptyState(
+                        child: EmptyState(
                           icon: Icons.calendar_month_outlined,
-                          title: 'No appointments yet',
-                          message:
-                              'Your upcoming and past bookings will appear here.',
+                          title: context.t('appointments.noneYet'),
+                          message: context.t('appointments.noneYetMessage'),
                         ),
                       )
                     else
@@ -222,14 +221,14 @@ class _UpcomingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Status',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  context.t('appointments.status'),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                 ),
               ),
               StatusPill(
-                label: _statusLabel(appointment.status),
+                label: _statusLabel(context, appointment.status),
                 icon: _statusIcon(appointment.status),
                 kind: _statusKind(appointment.status),
               ),
@@ -247,7 +246,10 @@ class _UpcomingCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            _text(appointment.centerName, fallback: 'NBTS center'),
+            _text(
+              appointment.centerName,
+              fallback: context.t('appointments.centerPending'),
+            ),
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 14,
@@ -259,14 +261,14 @@ class _UpcomingCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: _canManage(appointment) ? onReschedule : null,
-                  child: const Text('Reschedule'),
+                  child: FittedBox(child: Text(context.t('appointments.reschedule'))),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton(
                   onPressed: _canManage(appointment) ? onCancel : null,
-                  child: const Text('Cancel'),
+                  child: FittedBox(child: Text(context.t('appointments.cancel'))),
                 ),
               ),
             ],
@@ -325,7 +327,10 @@ class _AppointmentCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _text(appointment.centerName, fallback: 'NBTS center'),
+                  _text(
+                    appointment.centerName,
+                    fallback: context.t('appointments.centerPending'),
+                  ),
                   style: TextStyle(
                     color: scheme.onSurfaceVariant,
                     fontSize: 13,
@@ -340,12 +345,18 @@ class _AppointmentCard extends StatelessWidget {
               if (value == 'reschedule') onReschedule();
               if (value == 'cancel') onCancel();
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'reschedule', child: Text('Reschedule')),
-              PopupMenuItem(value: 'cancel', child: Text('Cancel')),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'reschedule',
+                child: FittedBox(child: Text(context.t('appointments.reschedule'))),
+              ),
+              PopupMenuItem(
+                value: 'cancel',
+                child: FittedBox(child: Text(context.t('appointments.cancel'))),
+              ),
             ],
             child: StatusPill(
-              label: _statusLabel(appointment.status),
+              label: _statusLabel(context, appointment.status),
               kind: _statusKind(appointment.status),
             ),
           ),
@@ -361,7 +372,12 @@ String _text(String? value, {required String fallback}) {
 }
 
 String _formatDateTime(DateTime? date) {
-  if (date == null) return 'Date pending';
+  if (date == null) {
+    return AppStrings.text(
+      'appointments.datePending',
+      LanguageController.code.value,
+    );
+  }
   const months = [
     'Jan',
     'Feb',
@@ -381,16 +397,16 @@ String _formatDateTime(DateTime? date) {
   return '${months[date.month - 1]} ${date.day}, ${date.year}  $hh:$mm';
 }
 
-String _statusLabel(String? status) {
+String _statusLabel(BuildContext context, String? status) {
   final value = status?.toLowerCase().trim();
   return switch (value) {
-    'pending' => 'Pending confirmation',
-    'confirmed' => 'Confirmed',
-    'rescheduled' => 'Rescheduled',
-    'cancelled' || 'canceled' => 'Cancelled',
-    'completed' => 'Completed',
-    'missed' => 'Missed',
-    _ => 'Upcoming',
+    'pending' => context.t('status.pendingConfirmation'),
+    'confirmed' => context.t('status.confirmed'),
+    'rescheduled' => context.t('status.rescheduled'),
+    'cancelled' || 'canceled' => context.t('status.cancelled'),
+    'completed' => context.t('status.completed'),
+    'missed' => context.t('status.missed'),
+    _ => context.t('status.upcoming'),
   };
 }
 
@@ -418,3 +434,4 @@ bool _canManage(Appointment appointment) {
   final status = appointment.status?.toLowerCase().trim();
   return status != 'completed' && status != 'cancelled';
 }
+

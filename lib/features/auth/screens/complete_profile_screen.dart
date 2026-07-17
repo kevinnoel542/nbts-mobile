@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/donation_center.dart';
+import 'package:nbts/core/data/models/user.dart';
 import 'package:nbts/core/routes/app_routes.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
 import 'package:nbts/features/auth/services/firebase_social_auth_service.dart';
@@ -70,23 +72,32 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   DateTime? _dateOfBirth;
   bool _pushNotifications = true;
   bool _smsReminders = true;
-  bool _shareAnonymizedData = false;
-  String _language = 'English';
+  String _language = LanguageController.label(LanguageController.code.value);
   bool _submitting = false;
+  bool _editMode = false;
+  bool _readArgs = false;
   String? _formError;
   Map<String, List<String>>? _fieldErrors;
 
   @override
   void initState() {
     super.initState();
-    final currentUser = Services.instance.auth.user;
-    _nameController.text = currentUser?.name ?? '';
-    _phoneController.text = currentUser?.phone ?? '';
-    _bloodGroup = _matchOption(_bloodGroups, currentUser?.bloodGroup);
-    _gender = _matchOption(_genders, currentUser?.gender);
-    _region = _matchOption(_regions, currentUser?.region);
-    _dateOfBirth = currentUser?.dateOfBirth;
+    _hydrateFromUser(Services.instance.auth.user);
     _centersFuture = Services.instance.centers.fetchAll();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_readArgs) return;
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map) {
+      if (args['mode'] == 'edit') _editMode = true;
+      final user = args['user'];
+      if (user is User) _hydrateFromUser(user);
+    }
+    _readArgs = true;
   }
 
   @override
@@ -97,6 +108,37 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     _emergencyNameController.dispose();
     _emergencyPhoneController.dispose();
     super.dispose();
+  }
+
+  void _hydrateFromUser(User? user) {
+    if (user == null) return;
+    _nameController.text = user.name;
+    _phoneController.text = user.phone ?? '';
+    _addressController.text = user.address ?? '';
+    _emergencyNameController.text = user.emergencyContactName ?? '';
+    _emergencyPhoneController.text = user.emergencyContactPhone ?? '';
+    _bloodGroup = _matchOption(_bloodGroups, user.bloodGroup);
+    _gender = _matchOption(_genders, user.gender);
+    _region = _matchOption(_regions, user.region);
+    _preferredCenterId = user.preferredCenterId;
+    _dateOfBirth = user.dateOfBirth;
+    _pushNotifications = user.pushNotificationsEnabled ?? _pushNotifications;
+    _smsReminders = user.smsRemindersEnabled ?? _smsReminders;
+    _language =
+        _languageLabel(user.language) ??
+        LanguageController.label(LanguageController.code.value);
+  }
+
+  String? _languageLabel(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final normalized = value.trim().toLowerCase();
+    if (normalized == 'sw' ||
+        normalized == 'swahili' ||
+        normalized == 'kiswahili') {
+      return 'Swahili';
+    }
+    if (normalized == 'en' || normalized == 'english') return 'English';
+    return null;
   }
 
   String? _matchOption(List<String> options, String? value) {
@@ -179,11 +221,14 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           'emergency_contact_phone': emergencyPhone,
         'push_notifications_enabled': _pushNotifications,
         'sms_reminders_enabled': _smsReminders,
-        'share_anonymized_data': _shareAnonymizedData,
         'language': _languageCode,
       });
       await Services.instance.auth.fetchCurrentUser();
       if (!mounted) return;
+      if (_editMode) {
+        Navigator.pop(context, true);
+        return;
+      }
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.dashboard,
@@ -219,15 +264,21 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text('Complete profile'),
-        actions: [
-          TextButton(
-            onPressed: _submitting ? null : _useAnotherAccount,
-            child: const Text('Sign out'),
-          ),
-          const SizedBox(width: 8),
-        ],
+        automaticallyImplyLeading: _editMode,
+        title: Text(
+          _editMode
+              ? context.t('complete.editProfile')
+              : context.t('complete.completeProfile'),
+        ),
+        actions: _editMode
+            ? null
+            : [
+                TextButton(
+                  onPressed: _submitting ? null : _useAnotherAccount,
+                  child: Text(context.t('profile.signOut')),
+                ),
+                const SizedBox(width: 8),
+              ],
       ),
       body: SafeArea(
         child: Form(
@@ -241,7 +292,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
             ),
             children: [
               Text(
-                'Finish your donor profile',
+                _editMode
+                    ? context.t('complete.editTitle')
+                    : context.t('complete.finishTitle'),
                 style: TextStyle(
                   color: scheme.onSurface,
                   fontSize: 24,
@@ -251,7 +304,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Google or Apple confirms your identity. NBTS still needs donor details before appointments and donor card access.',
+                _editMode
+                    ? context.t('complete.editSubtitle')
+                    : context.t('complete.finishSubtitle'),
                 style: TextStyle(
                   color: scheme.onSurfaceVariant,
                   fontSize: 14,
@@ -259,36 +314,36 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
-              const _SectionLabel('Required'),
+              _SectionLabel(context.t('complete.required')),
               const SizedBox(height: 12),
               _Field(
                 controller: _nameController,
-                label: 'Full name',
+                label: context.t('auth.fullName'),
                 icon: Icons.person_outline,
                 enabled: !_submitting,
                 errorText: _err('name'),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Enter your full name'
+                    ? context.t('auth.required')
                     : null,
               ),
               const SizedBox(height: 12),
               _Field(
                 controller: _phoneController,
-                label: 'Phone',
+                label: context.t('auth.phone'),
                 hint: '+255 712 000 000',
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
                 enabled: !_submitting,
                 errorText: _err('phone'),
                 validator: (value) => (value == null || value.trim().length < 9)
-                    ? 'Enter a valid phone'
+                    ? context.t('auth.validPhone')
                     : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _bloodGroup,
                 decoration: InputDecoration(
-                  labelText: 'Blood group',
+                  labelText: context.t('auth.bloodGroup'),
                   prefixIcon: const Icon(Icons.water_drop_outlined),
                   errorText: _err('blood_group'),
                 ),
@@ -306,7 +361,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               DropdownButtonFormField<String>(
                 initialValue: _gender,
                 decoration: InputDecoration(
-                  labelText: 'Gender',
+                  labelText: context.t('auth.gender'),
                   prefixIcon: const Icon(Icons.wc_outlined),
                   errorText: _err('gender'),
                 ),
@@ -325,7 +380,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 initialValue: _region,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: 'Region',
+                  labelText: context.t('auth.region'),
                   prefixIcon: const Icon(Icons.place_outlined),
                   errorText: _err('region'),
                 ),
@@ -345,13 +400,13 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 borderRadius: BorderRadius.circular(12),
                 child: InputDecorator(
                   decoration: InputDecoration(
-                    labelText: 'Date of birth',
+                    labelText: context.t('auth.dateOfBirth'),
                     prefixIcon: const Icon(Icons.cake_outlined),
                     errorText: _err('date_of_birth'),
                   ),
                   child: Text(
                     _dateOfBirth == null
-                        ? 'Select date'
+                        ? context.t('auth.selectDate')
                         : _formatDob(_dateOfBirth!),
                     style: TextStyle(
                       color: _dateOfBirth == null
@@ -363,11 +418,11 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
-              const _SectionLabel('Optional'),
+              _SectionLabel(context.t('complete.optional')),
               const SizedBox(height: 12),
               _Field(
                 controller: _addressController,
-                label: 'Address',
+                label: context.t('complete.address'),
                 icon: Icons.home_outlined,
                 enabled: !_submitting,
                 errorText: _err('address'),
@@ -381,7 +436,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     initialValue: _preferredCenterId,
                     isExpanded: true,
                     decoration: InputDecoration(
-                      labelText: 'Preferred blood center',
+                      labelText: context.t('complete.preferredCenter'),
                       prefixIcon: const Icon(Icons.local_hospital_outlined),
                       errorText: _err('preferred_center_id'),
                     ),
@@ -395,10 +450,10 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         .toList(),
                     hint: Text(
                       snapshot.connectionState == ConnectionState.waiting
-                          ? 'Loading centers'
+                          ? context.t('complete.loadingCenters')
                           : centers.isEmpty
-                          ? 'No centers available'
-                          : 'Select center',
+                          ? context.t('complete.noCenters')
+                          : context.t('complete.selectCenter'),
                     ),
                     onChanged: _submitting || centers.isEmpty
                         ? null
@@ -409,7 +464,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               const SizedBox(height: 12),
               _Field(
                 controller: _emergencyNameController,
-                label: 'Emergency contact name',
+                label: context.t('complete.emergencyName'),
                 icon: Icons.contact_emergency_outlined,
                 enabled: !_submitting,
                 errorText: _err('emergency_contact_name'),
@@ -417,14 +472,14 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               const SizedBox(height: 12),
               _Field(
                 controller: _emergencyPhoneController,
-                label: 'Emergency contact phone',
+                label: context.t('complete.emergencyPhone'),
                 icon: Icons.call_outlined,
                 keyboardType: TextInputType.phone,
                 enabled: !_submitting,
                 errorText: _err('emergency_contact_phone'),
               ),
               const SizedBox(height: AppSpacing.xl),
-              const _SectionLabel('Preferences'),
+              _SectionLabel(context.t('complete.preferences')),
               const SizedBox(height: 8),
               SwitchListTile.adaptive(
                 value: _pushNotifications,
@@ -432,8 +487,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     ? null
                     : (value) => setState(() => _pushNotifications = value),
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Push notifications'),
-                subtitle: const Text('Appointments and urgent NBTS alerts'),
+                title: Text(context.t('profile.pushNotifications')),
               ),
               SwitchListTile.adaptive(
                 value: _smsReminders,
@@ -441,18 +495,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     ? null
                     : (value) => setState(() => _smsReminders = value),
                 contentPadding: EdgeInsets.zero,
-                title: const Text('SMS reminders'),
-                subtitle: const Text('Donation appointment reminders'),
+                title: Text(context.t('profile.smsReminders')),
               ),
-              SwitchListTile.adaptive(
-                value: _shareAnonymizedData,
-                onChanged: _submitting
-                    ? null
-                    : (value) => setState(() => _shareAnonymizedData = value),
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Share anonymized data'),
-                subtitle: const Text('Helps NBTS planning and donor safety'),
-              ),
+
               const SizedBox(height: 12),
               SegmentedButton<String>(
                 segments: _languages
@@ -503,16 +548,22 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2.4),
                       )
-                    : const Text('Save and continue'),
+                    : Text(
+                        _editMode
+                            ? context.t('complete.saveChanges')
+                            : context.t('complete.saveContinue'),
+                      ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              Center(
-                child: TextButton.icon(
-                  onPressed: _submitting ? null : _useAnotherAccount,
-                  icon: const Icon(Icons.swap_horiz_rounded),
-                  label: const Text('Use another account'),
+              if (!_editMode) ...[
+                const SizedBox(height: AppSpacing.md),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _submitting ? null : _useAnotherAccount,
+                    icon: const Icon(Icons.swap_horiz_rounded),
+                    label: Text(context.t('complete.useAnother')),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

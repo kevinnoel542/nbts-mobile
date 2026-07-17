@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "856326606374-bmvd7af13at6dgo2mt29dkfq41b80g8h.apps.googleusercontent.com",
+          "client_id": "856326606374-qv80v8e45jhnhld3bek3gvvvb90v8553.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.nbts.mobile",
-            "certificate_hash": "db77e7a410d1af4e1eb0f6927c8cbc32befe1c6a"
+            "certificate_hash": "ccd79628beef4443e45e32c16f751bd31919379e"
           }
         },
         {

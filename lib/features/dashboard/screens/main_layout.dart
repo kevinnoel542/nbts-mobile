@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/routes/app_routes.dart';
@@ -96,40 +97,46 @@ class _MainLayoutState extends State<MainLayout> {
         child: NavigationBar(
           selectedIndex: _index,
           onDestinationSelected: _selectDestination,
-          destinations: const [
+          destinations: [
             NavigationDestination(
-              icon: _NavIcon('assets/nav/home.svg'),
-              selectedIcon: _NavIcon('assets/nav/home.svg', selected: true),
-              label: 'Home',
+              icon: const _NavIcon('assets/nav/home.svg'),
+              selectedIcon: const _NavIcon(
+                'assets/nav/home.svg',
+                selected: true,
+              ),
+              label: context.t('nav.home'),
             ),
             NavigationDestination(
-              icon: _NavIcon('assets/nav/calendar-clock.svg'),
-              selectedIcon: _NavIcon(
+              icon: const _NavIcon('assets/nav/calendar-clock.svg'),
+              selectedIcon: const _NavIcon(
                 'assets/nav/reminder-appointment.svg',
                 selected: true,
               ),
-              label: 'Book',
+              label: context.t('nav.book'),
             ),
             NavigationDestination(
-              icon: _NavIcon('assets/nav/hospital.svg'),
-              selectedIcon: _NavIcon('assets/nav/hospital.svg', selected: true),
-              label: 'Centers',
+              icon: const _NavIcon('assets/nav/hospital.svg'),
+              selectedIcon: const _NavIcon(
+                'assets/nav/hospital.svg',
+                selected: true,
+              ),
+              label: context.t('nav.centers'),
             ),
             NavigationDestination(
-              icon: _NavIcon('assets/nav/rectangle-vertical-history.svg'),
-              selectedIcon: _NavIcon(
+              icon: const _NavIcon('assets/nav/rectangle-vertical-history.svg'),
+              selectedIcon: const _NavIcon(
                 'assets/nav/rectangle-vertical-history.svg',
                 selected: true,
               ),
-              label: 'History',
+              label: context.t('nav.history'),
             ),
             NavigationDestination(
-              icon: _NavIcon('assets/nav/circle-user.svg'),
-              selectedIcon: _NavIcon(
+              icon: const _NavIcon('assets/nav/circle-user.svg'),
+              selectedIcon: const _NavIcon(
                 'assets/nav/circle-user.svg',
                 selected: true,
               ),
-              label: 'Profile',
+              label: context.t('nav.profile'),
             ),
           ],
         ),

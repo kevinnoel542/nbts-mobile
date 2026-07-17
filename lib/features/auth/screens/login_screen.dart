@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/routes/app_routes.dart';
@@ -157,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           children: [
             Text(
-              'Sign in',
+              context.t('auth.signIn'),
               style: TextStyle(
                 color: scheme.onSurface,
                 fontSize: 28,
@@ -167,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Use the email or phone you registered with.',
+              context.t('auth.loginSubtitle'),
               style: TextStyle(
                 color: scheme.onSurfaceVariant,
                 fontSize: 15,
@@ -176,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              'Email or phone',
+              context.t('auth.emailPhone'),
               style: TextStyle(
                 color: scheme.onSurface,
                 fontSize: 13,
@@ -192,12 +193,12 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: _fieldDecoration(
                 scheme: scheme,
                 icon: Icons.alternate_email_rounded,
-                hintText: 'Email or phone number',
+                hintText: context.t('auth.emailPhoneHint'),
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              'Password',
+              context.t('auth.password'),
               style: TextStyle(
                 color: scheme.onSurface,
                 fontSize: 13,
@@ -214,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: _fieldDecoration(
                 scheme: scheme,
                 icon: Icons.lock_outline_rounded,
-                hintText: 'Password',
+                hintText: context.t('auth.password'),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscure
@@ -274,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2.4),
                     )
-                  : const Text('Sign in'),
+                  : Text(context.t('auth.signIn')),
             ),
 
             const SizedBox(height: 24),
@@ -288,13 +289,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _submitting
                     ? null
                     : () => Navigator.pushNamed(context, AppRoutes.register),
-                child: const Text("New to NBTS?  Create an account"),
+                child: Text(context.t('auth.newAccount')),
               ),
             ),
             const SizedBox(height: 24),
             Center(
               child: Text(
-                'By continuing you accept the Privacy Policy.',
+                context.t('auth.privacyAccept'),
                 style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
               ),
             ),

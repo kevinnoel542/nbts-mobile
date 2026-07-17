@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/donation_record.dart';
@@ -48,7 +49,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('History'),
+        title: const SizedBox.shrink(),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list_rounded),
@@ -100,7 +101,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     AppSpacing.xxl + AppSpacing.lg,
                   ),
                   children: [
-                    const SectionHeader('Impact'),
+                    _ScreenHeader(
+                      icon: Icons.history_rounded,
+                      title: context.t('history.title'),
+                      subtitle: context.t('history.subtitle'),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    SectionHeader(context.t('history.impact')),
                     Row(
                       children: [
                         Expanded(
@@ -110,7 +117,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               icon: Icons.water_drop_outlined,
                               value: _liters(user, donations),
                               unit: 'L',
-                              label: 'Total donated',
+                              label: context.t('history.totalDonated'),
                             ),
                           ),
                         ),
@@ -122,22 +129,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               icon: Icons.favorite_outline_rounded,
                               value:
                                   '${user?.totalDonations ?? donations.length}',
-                              label: 'Donations',
+                              label: context.t('dashboard.donations'),
                             ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    const SectionHeader('Donations'),
+                    SectionHeader(context.t('dashboard.donations')),
                     if (donations.isEmpty)
                       AppCard(
                         padding: const EdgeInsets.all(AppSpacing.md),
-                        child: const EmptyState(
+                        child: EmptyState(
                           icon: Icons.history_toggle_off_rounded,
-                          title: 'No records yet',
-                          message:
-                              'Verified donation records will appear once NBTS syncs your data.',
+                          title: context.t('history.noRecords'),
+                          message: context.t('history.noRecordsMessage'),
                         ),
                       )
                     else
@@ -153,7 +159,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         AppRoutes.bookAppointment,
                       ),
                       icon: const Icon(Icons.add_rounded),
-                      label: const Text('Schedule next donation'),
+                      label: Text(context.t('history.scheduleNext')),
                     ),
                   ],
                 ),
@@ -170,6 +176,64 @@ class _HistoryScreenState extends State<HistoryScreen> {
         user?.totalVolumeMl ??
         records.fold<int>(0, (sum, record) => sum + (record.volumeMl ?? 0));
     return (ml / 1000).toStringAsFixed(1);
+  }
+}
+
+class _ScreenHeader extends StatelessWidget {
+  const _ScreenHeader({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: scheme.primary.withValues(alpha: 0.12),
+            borderRadius: AppRadius.chip,
+            border: Border.all(color: scheme.primary.withValues(alpha: 0.18)),
+          ),
+          child: Icon(icon, color: scheme.primary, size: 22),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: scheme.onSurface,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: scheme.onSurfaceVariant,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -319,7 +383,7 @@ void _showHistoryFilterInfo(BuildContext context) {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Donation records',
+            context.t('history.records'),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -333,7 +397,7 @@ void _showHistoryFilterInfo(BuildContext context) {
             alignment: Alignment.centerRight,
             child: FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Done'),
+              child: Text(context.t('common.done')),
             ),
           ),
         ],

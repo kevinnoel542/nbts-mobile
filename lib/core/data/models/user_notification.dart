@@ -25,7 +25,9 @@ class UserNotification {
       title: readString(json, ['title', 'heading', 'subject']) ?? 'NBTS update',
       body: readString(json, ['body', 'message', 'content']) ?? '',
       type: readString(json, ['type', 'category']),
-      read: readBool(json, ['read', 'is_read']) ?? readDate(json, ['read_at']) != null,
+      read:
+          readBool(json, ['read', 'is_read']) ??
+          readDate(json, ['read_at']) != null,
       sentAt: readDate(json, ['sent_at']),
       createdAt: readDate(json, ['created_at']),
     );
