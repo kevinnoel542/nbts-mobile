@@ -200,6 +200,12 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       return;
     }
 
+    final phone = _phoneController.text.trim();
+    if (_smsReminders && phone.isEmpty) {
+      setState(() => _formError = context.t('profile.smsPhoneRequired'));
+      return;
+    }
+
     final address = _addressController.text.trim();
     final emergencyName = _emergencyNameController.text.trim();
     final emergencyPhone = _emergencyPhoneController.text.trim();
@@ -208,7 +214,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     try {
       await Services.instance.profile.update({
         'name': _nameController.text.trim(),
-        'phone': _phoneController.text.trim(),
+        'phone': phone,
         'blood_group': _bloodGroup,
         'gender': _gender!.toLowerCase(),
         'region': _region,
@@ -628,3 +634,4 @@ class _Field extends StatelessWidget {
     );
   }
 }
+

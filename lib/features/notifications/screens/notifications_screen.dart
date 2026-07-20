@@ -17,6 +17,7 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   late Future<List<UserNotification>> _future;
+  List<UserNotification> _notifications = const <UserNotification>[];
 
   @override
   void initState() {
@@ -29,6 +30,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _future = Services.instance.notifications.fetchAll();
     });
     final list = await _future;
+    _notifications = list;
     setNotificationCount(list.where((n) => !n.read).length);
   }
 
@@ -90,6 +92,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     await _refresh();
   }
 
+  Future<bool> _deleteNotification(UserNotification notification) async {
+    if (notification.id == 0) return false;
+    try {
+      await Services.instance.notifications.delete(notification.id);
+      return true;
+    } on ApiException catch (e) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.firstError())));
+      return false;
+    } catch (_) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('notifications.deleteFailed'))),
+      );
+      return false;
+    }
+  }
+
+  void _removeNotification(UserNotification notification) {
+    final next = _notifications
+        .where((item) => item.id != notification.id)
+        .toList(growable: false);
+    setState(() {
+      _notifications = next;
+      _future = Future.value(next);
+    });
+    setNotificationCount(next.where((n) => !n.read).length);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.t('notifications.deleted'))));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,7 +149,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (snapshot.hasError) {
             final message = snapshot.error is ApiException
                 ? (snapshot.error as ApiException).message
-                : 'Could not load notifications.';
+                : context.t('notifications.loadFailed');
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
@@ -131,6 +167,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           }
 
           final notifications = snapshot.data ?? const <UserNotification>[];
+          _notifications = notifications;
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView(
@@ -143,28 +180,70 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
               children: [
                 if (notifications.isEmpty)
-                  const AppCard(
-                    padding: EdgeInsets.all(AppSpacing.md),
+                  AppCard(
+                    padding: const EdgeInsets.all(AppSpacing.md),
                     child: EmptyState(
                       icon: Icons.notifications_none_rounded,
-                      title: 'No notifications yet',
-                      message:
-                          'NBTS alerts, appointments, and campaign updates will appear here.',
+                      title: context.t('notifications.empty'),
+                      message: context.t('notifications.emptyMessage'),
                     ),
                   )
                 else
                   for (final notification in notifications)
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: _NotificationTile(
-                        notification: notification,
-                        onTap: () => _open(notification),
+                      child: Dismissible(
+                        key: ValueKey('notification-${notification.id}'),
+                        direction: DismissDirection.endToStart,
+                        background: _DismissBackground(
+                          label: context.t('notifications.delete'),
+                        ),
+                        confirmDismiss: (_) =>
+                            _deleteNotification(notification),
+                        onDismissed: (_) => _removeNotification(notification),
+                        child: _NotificationTile(
+                          notification: notification,
+                          onTap: () => _open(notification),
+                        ),
                       ),
                     ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _DismissBackground extends StatelessWidget {
+  const _DismissBackground({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: scheme.error,
+        borderRadius: AppRadius.card,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Icon(Icons.delete_outline_rounded, color: scheme.onError),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: scheme.onError,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

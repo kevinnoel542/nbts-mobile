@@ -68,7 +68,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           if (donationsSnap.hasError) {
             final message = donationsSnap.error is ApiException
                 ? (donationsSnap.error as ApiException).message
-                : 'Could not load donation history.';
+                : context.t('history.loadFailed');
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
@@ -77,7 +77,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: [
                   EmptyState(
                     icon: Icons.history_toggle_off_rounded,
-                    title: 'History unavailable',
+                    title: context.t('history.unavailable'),
                     message: message,
                   ),
                 ],
@@ -287,7 +287,7 @@ class _HistoryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _text(record.centerName, fallback: 'NBTS center'),
+                  _text(record.centerName, fallback: context.t('history.centerFallback')),
                   style: TextStyle(
                     color: scheme.onSurface,
                     fontSize: 14,
@@ -296,7 +296,7 @@ class _HistoryTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${_text(record.status, fallback: 'Recorded')} - ${_formatDate(date)}',
+                  '${_text(record.status, fallback: context.t('history.recorded'))} - ${_formatDate(context, date)}',
                   style: TextStyle(
                     color: scheme.onSurfaceVariant,
                     fontSize: 12,
@@ -320,7 +320,7 @@ class _HistoryTile extends StatelessWidget {
               Text(
                 _text(
                   record.donationType ?? record.bloodType,
-                  fallback: 'blood',
+                  fallback: context.t('history.blood'),
                 ).toUpperCase(),
                 style: TextStyle(
                   color: scheme.onSurfaceVariant,
@@ -354,8 +354,8 @@ class _HistoryTile extends StatelessWidget {
     return months[date.month - 1];
   }
 
-  static String _formatDate(DateTime? date) {
-    if (date == null) return 'Date pending';
+  static String _formatDate(BuildContext context, DateTime? date) {
+    if (date == null) return context.t('history.datePending');
     final hh = date.hour.toString().padLeft(2, '0');
     final mm = date.minute.toString().padLeft(2, '0');
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} $hh:$mm';
@@ -389,9 +389,7 @@ void _showHistoryFilterInfo(BuildContext context) {
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'This view shows all donation records currently synced from NBTS. Filters will become available when more record categories are provided by the backend.',
-          ),
+          Text(context.t('history.recordsInfo')),
           const SizedBox(height: AppSpacing.lg),
           Align(
             alignment: Alignment.centerRight,
@@ -405,3 +403,5 @@ void _showHistoryFilterInfo(BuildContext context) {
     ),
   );
 }
+
+

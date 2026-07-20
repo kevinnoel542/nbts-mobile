@@ -150,7 +150,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     _Greeting(scheme: scheme, user: user),
                     const SizedBox(height: AppSpacing.lg),
-                    const _UrgentRequestBanner(),
+                    FutureBuilder<List<Campaign>>(
+                      future: _campaignsFuture,
+                      builder: (context, campaignSnap) {
+                        final urgent = _activeUrgentCampaign(
+                          campaignSnap.data ?? const <Campaign>[],
+                        );
+                        return _UrgentRequestBanner(campaign: urgent);
+                      },
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     FutureBuilder<Eligibility?>(
                       future: _eligibilityFuture,
@@ -680,12 +688,28 @@ class _ArticlesPlaceholder extends StatelessWidget {
 }
 
 class _UrgentRequestBanner extends StatelessWidget {
-  const _UrgentRequestBanner();
+  const _UrgentRequestBanner({required this.campaign});
+
+  final Campaign? campaign;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final urgent = campaign;
+    final hasUrgent = urgent != null;
+    final title = hasUrgent ? urgent.title : context.t('dashboard.noUrgent');
+    final subtitle = hasUrgent
+        ? [urgent.bloodType, urgent.centerName].whereType<String>().join(' - ')
+        : null;
+
     return AppCard(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.centers),
+      onTap: () {
+        if (urgent == null) {
+          Navigator.pushNamed(context, AppRoutes.centers);
+          return;
+        }
+        _showCampaignSheet(context, urgent);
+      },
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
@@ -694,13 +718,15 @@ class _UrgentRequestBanner extends StatelessWidget {
             height: 40,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppStatus.warning.withValues(alpha: 0.10),
+              color: hasUrgent
+                  ? scheme.errorContainer.withValues(alpha: 0.85)
+                  : AppStatus.warning.withValues(alpha: 0.10),
               borderRadius: AppRadius.chip,
             ),
-            child: const Icon(
-              Icons.campaign_rounded,
+            child: Icon(
+              hasUrgent ? Icons.priority_high_rounded : Icons.campaign_rounded,
               size: 20,
-              color: AppStatus.warning,
+              color: hasUrgent ? scheme.onErrorContainer : AppStatus.warning,
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -708,28 +734,57 @@ class _UrgentRequestBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const StatusPill(label: 'All clear', kind: StatusKind.success),
+                StatusPill(
+                  label: hasUrgent
+                      ? context.t('dashboard.urgentRequest')
+                      : context.t('dashboard.allClear'),
+                  kind: hasUrgent ? StatusKind.warning : StatusKind.success,
+                ),
                 const SizedBox(height: 6),
                 Text(
-                  'No urgent blood requests right now',
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: scheme.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     letterSpacing: -0.2,
                   ),
                 ),
+                if (subtitle != null && subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
         ],
       ),
     );
   }
+}
+
+Campaign? _activeUrgentCampaign(List<Campaign> campaigns) {
+  final now = DateTime.now();
+  for (final campaign in campaigns) {
+    if (campaign.urgent != true) continue;
+    final startsAt = campaign.startsAt;
+    final endsAt = campaign.endsAt;
+    if (startsAt != null && startsAt.isAfter(now)) continue;
+    if (endsAt != null && endsAt.isBefore(now)) continue;
+    return campaign;
+  }
+  return null;
 }
 
 class _NextAppointmentCard extends StatelessWidget {
@@ -742,10 +797,10 @@ class _NextAppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final next = appointment;
     final label = next == null
-        ? 'No upcoming appointment'
+        ? context.t('dashboard.noUpcomingAppointment')
         : next.scheduledAt != null
         ? _formatDateTime(next.scheduledAt!)
-        : (next.centerName ?? 'Scheduled');
+        : (next.centerName ?? context.t('dashboard.scheduled'));
     return AppCard(
       child: Row(
         children: [
@@ -769,7 +824,7 @@ class _NextAppointmentCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Next appointment',
+                  context.t('appointments.next'),
                   style: TextStyle(
                     color: scheme.onSurfaceVariant,
                     fontSize: 12,
@@ -802,7 +857,11 @@ class _NextAppointmentCard extends StatelessWidget {
           TextButton(
             onPressed: () =>
                 Navigator.pushNamed(context, AppRoutes.bookAppointment),
-            child: Text(next == null ? 'Book' : 'Manage'),
+            child: Text(
+              next == null
+                  ? context.t('nav.book')
+                  : context.t('dashboard.manage'),
+            ),
           ),
         ],
       ),
@@ -834,7 +893,7 @@ class _ImpactCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Your impact',
+                context.t('dashboard.yourImpact'),
                 style: TextStyle(
                   color: scheme.onSurface,
                   fontSize: 15,
@@ -866,7 +925,7 @@ class _ImpactCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Donations toward the next loyalty tier.',
+            context.t('dashboard.impactCaption'),
             style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
           ),
         ],
@@ -906,8 +965,7 @@ void _showForYouSheet(
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: AppSpacing.md),
-            if (items.isEmpty)
-              const Text('No campaigns or articles available right now.'),
+            if (items.isEmpty) Text(context.t('dashboard.noForYou')),
             for (final item in items)
               ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -921,8 +979,10 @@ void _showForYouSheet(
                 ),
                 subtitle: Text(
                   item is Campaign
-                      ? (item.summary ?? 'Campaign update')
-                      : ((item as Article).summary ?? item.body ?? 'Article'),
+                      ? (item.summary ?? context.t('dashboard.campaignUpdate'))
+                      : ((item as Article).summary ??
+                            item.body ??
+                            context.t('dashboard.article')),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -947,8 +1007,10 @@ void _showCampaignSheet(BuildContext context, Campaign campaign) {
     icon: campaign.urgent == true
         ? Icons.priority_high_rounded
         : Icons.campaign_outlined,
-    body: campaign.summary ?? 'No campaign details provided yet.',
-    actionLabel: opensBooking ? 'Book donation' : 'Find centers',
+    body: campaign.summary ?? context.t('dashboard.noCampaignDetails'),
+    actionLabel: opensBooking
+        ? context.t('dashboard.bookDonation')
+        : context.t('dashboard.findCenter'),
     onAction: () {
       Navigator.pop(context);
       if (campaign.centerId != null) {
@@ -975,7 +1037,10 @@ void _showArticleSheet(BuildContext context, Article article) {
     context,
     title: article.title,
     icon: Icons.article_outlined,
-    body: article.body ?? article.summary ?? 'No article details provided yet.',
+    body:
+        article.body ??
+        article.summary ??
+        context.t('dashboard.noArticleDetails'),
   );
 }
 
@@ -984,7 +1049,7 @@ void _showDetailSheet(
   required String title,
   required IconData icon,
   required String body,
-  String actionLabel = 'Done',
+  String? actionLabel,
   VoidCallback? onAction,
 }) {
   showModalBottomSheet<void>(
@@ -1016,7 +1081,7 @@ void _showDetailSheet(
             alignment: Alignment.centerRight,
             child: FilledButton(
               onPressed: onAction ?? () => Navigator.pop(context),
-              child: Text(actionLabel),
+              child: Text(actionLabel ?? context.t('common.done')),
             ),
           ),
         ],

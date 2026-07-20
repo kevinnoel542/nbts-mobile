@@ -55,19 +55,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pushNamedAndRemoveUntil(context, AppRoutes.welcome, (_) => false);
   }
 
+  bool _hasSmsPhone() => (_lastUser?.phone ?? '').trim().isNotEmpty;
+
+  Future<void> _editProfile() async {
+    final changed = await Navigator.pushNamed(
+      context,
+      AppRoutes.completeProfile,
+      arguments: {'mode': 'edit', 'user': _lastUser},
+    );
+    if (changed == true && mounted) await _refresh();
+  }
+
   Future<void> _updatePreference(String key, bool value) async {
+    final previousPush = _push;
+    final previousSms = _sms;
     try {
       await Services.instance.profile.update({key: value});
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Preference updated.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('profile.preferenceUpdated'))),
+      );
+      await _refresh();
     } on ApiException catch (e) {
       if (!mounted) return;
+      setState(() {
+        _push = previousPush;
+        _sms = previousSms;
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.firstError())));
     }
+  }
+
+  void _handleSmsReminderChanged(bool value) {
+    if (value && !_hasSmsPhone()) {
+      setState(() => _sms = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.t('profile.smsPhoneRequired')),
+          action: SnackBarAction(
+            label: context.t('complete.editProfile'),
+            onPressed: _editProfile,
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() => _sms = value);
+    _updatePreference('sms_reminders_enabled', value);
   }
 
   Future<void> _updateLanguage(String language) async {
@@ -81,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Language updated.')));
+      ).showSnackBar(SnackBar(content: Text(context.t('profile.languageUpdated'))));
     } on ApiException catch (e) {
       if (!mounted) return;
       await LanguageController.set(previous);
@@ -176,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Could not update photo: $e')));
+      ).showSnackBar(SnackBar(content: Text(' $e')));
     } finally {
       if (mounted) setState(() => _photoUploading = false);
     }
@@ -295,7 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               alignment: Alignment.centerRight,
               child: FilledButton(
                 onPressed: onAction ?? () => Navigator.pop(context),
-                child: Text(actionLabel ?? 'Done'),
+                child: Text(actionLabel ?? context.t('common.done')),
               ),
             ),
           ],
@@ -315,14 +351,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () async {
-              final changed = await Navigator.pushNamed(
-                context,
-                AppRoutes.completeProfile,
-                arguments: {'mode': 'edit', 'user': _lastUser},
-              );
-              if (changed == true && mounted) await _refresh();
-            },
+            onPressed: _editProfile,
           ),
           const SizedBox(width: 4),
         ],
@@ -337,7 +366,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (snapshot.hasError) {
             final message = snapshot.error is ApiException
                 ? (snapshot.error as ApiException).message
-                : 'Could not load your profile.';
+                : context.t('profile.loadFailed');
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
@@ -346,7 +375,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   EmptyState(
                     icon: Icons.person_off_outlined,
-                    title: 'Profile unavailable',
+                    title: context.t('profile.unavailable'),
                     message: message,
                   ),
                 ],
@@ -403,10 +432,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.contact_emergency_outlined,
                         label: _copy('emergencyContact'),
                         onTap: () => _showInfoSheet(
-                          title: 'Emergency contact',
+                          title: context.t('profile.emergencyContact'),
                           icon: Icons.contact_emergency_outlined,
-                          message:
-                              'Emergency contact editing is stored on the backend profile endpoint. Ask staff to verify this information before donation day.',
+                          message: context.t('profile.emergencyMessage'),
                         ),
                       ),
                     ],
@@ -429,10 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _Divider(scheme: scheme),
                       SwitchListTile.adaptive(
                         value: _sms,
-                        onChanged: (v) {
-                          setState(() => _sms = v);
-                          _updatePreference('sms_reminders_enabled', v);
-                        },
+                        onChanged: _handleSmsReminderChanged,
                         title: Text(_copy('smsReminders')),
                       ),
                     ],
@@ -484,10 +509,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.help_outline_rounded,
                         label: _copy('faq'),
                         onTap: () => _showInfoSheet(
-                          title: 'FAQ and donor guide',
+                          title: context.t('profile.faq'),
                           icon: Icons.help_outline_rounded,
-                          message:
-                              'Bring a valid ID, eat before donating, drink water, and tell NBTS staff about medication or recent illness before donation.',
+                          message: context.t('profile.faqMessage'),
                         ),
                       ),
                       _Divider(scheme: scheme),
@@ -495,11 +519,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.chat_bubble_outline_rounded,
                         label: _copy('contactSupport'),
                         onTap: () => _showInfoSheet(
-                          title: 'Contact NBTS support',
+                          title: context.t('profile.contactSupport'),
                           icon: Icons.chat_bubble_outline_rounded,
-                          message:
-                              'For urgent appointment or donor record support, contact your nearest NBTS center or use the center list in the app.',
-                          actionLabel: 'Find centers',
+                          message: context.t('profile.contactMessage'),
+                          actionLabel: context.t('dashboard.findCenter'),
                           onAction: () {
                             Navigator.pop(context);
                             Navigator.pushNamed(context, AppRoutes.centers);
@@ -511,10 +534,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.privacy_tip_outlined,
                         label: _copy('privacy'),
                         onTap: () => _showInfoSheet(
-                          title: 'Account and privacy',
+                          title: context.t('profile.privacy'),
                           icon: Icons.privacy_tip_outlined,
-                          message:
-                              'Your donor profile is used for eligibility, appointment reminders, donation history, and NBTS planning. You can sign out from this screen any time.',
+                          message: context.t('profile.privacyMessage'),
                         ),
                       ),
                     ],
@@ -847,5 +869,9 @@ String? _languageLabel(String? value) {
     _ => null,
   };
 }
+
+
+
+
 
 

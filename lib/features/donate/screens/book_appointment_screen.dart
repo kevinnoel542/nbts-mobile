@@ -54,7 +54,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       if (args.centerId != null) {
         _selectedCenter = DonationCenter(
           id: args.centerId!,
-          name: args.centerName ?? 'Selected center',
+          name: args.centerName ?? context.t('book.donationCenter'),
         );
       }
       final scheduledAt = args.scheduledAt;
@@ -132,11 +132,11 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     final date = _selectedDate;
     final slot = _selectedSlot;
     if (center == null || date == null || slot == null) {
-      setState(() => _formError = 'Choose a center, date, and time.');
+      setState(() => _formError = context.t('book.chooseRequired'));
       return;
     }
     if (!slot.available) {
-      setState(() => _formError = slot.reason ?? 'This time is not available.');
+      setState(() => _formError = slot.reason ?? context.t('book.timeUnavailable'));
       return;
     }
 
@@ -161,7 +161,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
           if (!mounted) return;
           setState(
             () => _formError =
-                'You already have an active appointment. Reschedule or cancel it first.',
+                context.t('book.activeExists'),
           );
           return;
         }
@@ -181,8 +181,8 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
         SnackBar(
           content: Text(
             _rescheduleAppointment == null
-                ? 'Appointment booked.'
-                : 'Appointment rescheduled.',
+                ? context.t('book.booked')
+                : context.t('book.rescheduled'),
           ),
         ),
       );
@@ -194,8 +194,8 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       if (!mounted) return;
       setState(
         () => _formError = _rescheduleAppointment == null
-            ? 'Could not book appointment.'
-            : 'Could not reschedule appointment.',
+            ? context.t('book.bookFailed')
+            : context.t('book.rescheduleFailed'),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -273,10 +273,10 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                   size: 18,
                 ),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Have a meal and water 2 hours before donating.',
-                    style: TextStyle(fontSize: 13),
+                    context.t('book.tip'),
+                    style: const TextStyle(fontSize: 13),
                   ),
                 ),
               ],
@@ -368,14 +368,14 @@ class _CenterPicker extends StatelessWidget {
         if (snapshot.hasError && selectedCenter == null) {
           final message = snapshot.error is ApiException
               ? (snapshot.error as ApiException).message
-              : 'Could not load donation centers.';
+              : context.t('book.centersLoadFailed');
           return AppCard(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               children: [
                 EmptyState(
                   icon: Icons.cloud_off_outlined,
-                  title: 'Centers unavailable',
+                  title: context.t('book.centersUnavailable'),
                   message: message,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -399,9 +399,9 @@ class _CenterPicker extends StatelessWidget {
           child: DropdownButtonFormField<DonationCenter>(
             initialValue: _selectedValue(selectedCenter, centers),
             isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Donation center',
-              prefixIcon: Icon(Icons.place_outlined),
+            decoration: InputDecoration(
+              labelText: context.t('book.donationCenter'),
+              prefixIcon: const Icon(Icons.place_outlined),
             ),
             hint: Text(context.t('book.chooseCenter')),
             items: [
@@ -561,7 +561,9 @@ class _DatePickerStrip extends StatelessWidget {
   }
 
   static String _weekday(DateTime d) {
-    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final labels = LanguageController.code.value == 'sw'
+        ? const ['J', 'J', 'T', 'A', 'I', 'J', 'P']
+        : const ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return labels[d.weekday - 1];
   }
 
@@ -605,9 +607,9 @@ class _SlotSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final future = slotsFuture;
     if (!hasCenterAndDate || future == null) {
-      return const _SlotMessage(
+      return _SlotMessage(
         icon: Icons.schedule_outlined,
-        message: 'Choose a center and date to see available times.',
+        message: context.t('book.chooseCenterDate'),
       );
     }
 
@@ -624,14 +626,14 @@ class _SlotSection extends StatelessWidget {
         if (snapshot.hasError) {
           final message = snapshot.error is ApiException
               ? (snapshot.error as ApiException).message
-              : 'Could not load available times.';
+              : context.t('book.timesLoadFailed');
           return AppCard(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               children: [
                 EmptyState(
                   icon: Icons.event_busy_outlined,
-                  title: 'Times unavailable',
+                  title: context.t('book.timesUnavailable'),
                   message: message,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -650,10 +652,9 @@ class _SlotSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (options.usingFallback) ...[
-              const _SlotMessage(
+              _SlotMessage(
                 icon: Icons.info_outline_rounded,
-                message:
-                    'Showing standard times until this center sends live availability.',
+                message: context.t('book.standardTimes'),
               ),
               const SizedBox(height: AppSpacing.sm),
             ],
@@ -826,7 +827,7 @@ class _AppointmentSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Appointment summary',
+            context.t('book.summary'),
             style: TextStyle(
               color: scheme.onSurface,
               fontSize: 15,
@@ -837,20 +838,20 @@ class _AppointmentSummary extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           _SummaryLine(
             icon: Icons.place_outlined,
-            label: 'Center',
-            value: center?.name ?? 'Choose center',
+            label: context.t('book.center'),
+            value: center?.name ?? context.t('book.chooseCenter'),
           ),
           const SizedBox(height: AppSpacing.sm),
           _SummaryLine(
             icon: Icons.calendar_today_outlined,
-            label: 'Date',
-            value: _formatDate(date) ?? 'Choose date',
+            label: context.t('book.date'),
+            value: _formatDate(date) ?? context.t('book.chooseDate'),
           ),
           const SizedBox(height: AppSpacing.sm),
           _SummaryLine(
             icon: Icons.schedule_outlined,
-            label: 'Time',
-            value: slot?.value ?? 'Choose time',
+            label: context.t('book.time'),
+            value: slot?.value ?? context.t('book.chooseTime'),
           ),
         ],
       ),
@@ -980,3 +981,5 @@ String? _formatDate(DateTime? date) {
   ];
   return '${months[date.month - 1]} ${date.day}, ${date.year}';
 }
+
+

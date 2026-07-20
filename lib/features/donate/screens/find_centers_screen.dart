@@ -86,7 +86,7 @@ class _FindCentersScreenState extends State<FindCentersScreen> {
                 if (snapshot.hasError) {
                   final message = snapshot.error is ApiException
                       ? (snapshot.error as ApiException).message
-                      : 'Could not load donation centers.';
+                      : context.t('centers.loadFailed');
                   return _StateList(
                     onRefresh: _refresh,
                     child: EmptyState(
@@ -327,4 +327,5 @@ class _Detail extends StatelessWidget {
     );
   }
 }
+
 

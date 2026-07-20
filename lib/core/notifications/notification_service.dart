@@ -76,15 +76,55 @@ class NotificationService {
 
   void _listenForForegroundMessages() {
     _foregroundMessageSub ??= FirebaseMessaging.onMessage.listen((message) {
-      final notification = message.notification;
-      final title = notification?.title ?? message.data['title']?.toString();
-      final body = notification?.body ?? message.data['body']?.toString();
+      final title = _messageTitle(message);
+      final body = _messageBody(message);
       incrementNotificationCount();
-      _showSystemNotification(
-        title: title == null || title.isEmpty ? 'NBTS update' : title,
-        body: body ?? '',
-      );
+      _showSystemNotification(title: title, body: body);
     });
+  }
+
+  String _messageTitle(RemoteMessage message) {
+    final notificationTitle = message.notification?.title;
+    if (notificationTitle != null && notificationTitle.trim().isNotEmpty) {
+      return notificationTitle;
+    }
+
+    final data = message.data;
+    for (final key in const ['title', 'campaign_title', 'heading', 'subject']) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+
+    final type = data['type']?.toString().toLowerCase() ?? '';
+    if (type.contains('urgent') || type.contains('stock')) {
+      return 'Urgent blood request';
+    }
+    if (type.contains('appointment')) return 'Appointment reminder';
+    if (type.contains('campaign')) return 'NBTS campaign';
+    return 'NBTS update';
+  }
+
+  String _messageBody(RemoteMessage message) {
+    final notificationBody = message.notification?.body;
+    if (notificationBody != null && notificationBody.trim().isNotEmpty) {
+      return notificationBody;
+    }
+
+    final data = message.data;
+    for (final key in const ['body', 'message', 'summary', 'content']) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+
+    final bloodGroup = data['blood_group'] ?? data['blood_type'];
+    final centerName = data['center_name'] ?? data['blood_center_name'];
+    final parts = [bloodGroup, centerName]
+        .whereType<Object>()
+        .map((value) => value.toString().trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+    if (parts.isNotEmpty) return parts.join(' - ');
+    return '';
   }
 
   Future<void> _showSystemNotification({
@@ -116,3 +156,4 @@ class NotificationService {
     return 'android';
   }
 }
+

@@ -482,3 +482,44 @@ Laravel can keep the backend field if needed for admin/internal policy, but dono
 - Campaigns without a center_id still open Centers so the donor can choose where to donate.
 - Laravel/admin should send center_id, center_name, starts_at, ends_at, blood_group, and urgent for campaign cards so Flutter can route to the correct destination.
 
+
+## 2026-07-20 API base URL
+- Updated Flutter default API base URL to http://192.168.0.199:8003/api/v1 for the current Laravel server.
+
+
+## Notification Swipe Delete
+- Flutter notifications now support swipe-left delete on each notification card.
+- Flutter calls DELETE /api/v1/notifications/{id} when a notification is dismissed.
+- Laravel should support that endpoint by deleting or dismissing only the authenticated user's notification, then returning success.
+- If Laravel rejects the delete, Flutter keeps the notification visible and shows the API error.
+
+
+## SMS Reminders Implementation
+- Flutter now treats SMS reminders as a real donor preference tied to the saved donor phone number.
+- The Profile screen will not enable SMS reminders when the donor has no phone number; it shows a message and offers Edit Profile.
+- Complete Profile blocks saving SMS reminders enabled if the phone number is missing.
+- Flutter continues sending sms_reminders_enabled through PUT /api/v1/profile.
+- Laravel must send the actual SMS reminders because mobile apps cannot reliably send scheduled SMS in the background.
+- Laravel should send SMS to the authenticated donor profile phone number only when sms_reminders_enabled is true.
+- Laravel should schedule appointment reminders such as 7 days, 3 days, and 1 day before the appointment, and stop immediately when the donor disables SMS reminders.
+- Laravel should log SMS delivery status and avoid sending if the appointment is cancelled, completed, or rescheduled.
+
+
+## Dashboard Urgent Request Banner
+- Flutter dashboard urgent banner now reads real urgent campaigns from GET /api/v1/campaigns instead of always showing a static All clear message.
+- Flutter treats a campaign as urgent when urgent, is_urgent, or priority_urgent is true.
+- Flutter ignores urgent campaigns whose starts_at is in the future or whose ends_at has passed.
+- When an urgent campaign has center_id, tapping the banner opens booking with that center selected.
+- Laravel/admin should provide urgent campaign fields: title, summary, blood_group or blood_type, center_id, center_name, urgent, starts_at, ends_at.
+
+
+## SMS Reminders and Urgent Push Alerts
+- SMS reminders remain a Laravel responsibility: Flutter only saves sms_reminders_enabled and the donor phone number through PUT /api/v1/profile.
+- Laravel should send appointment SMS reminders to the saved donor phone number only when sms_reminders_enabled is true and the appointment is still active.
+- Recommended SMS schedule: 7 days, 3 days, and 1 day before donation appointment, plus optional same-day reminder if NBTS wants it.
+- Urgent blood requests should create both an in-app notification record for GET /api/v1/notifications and an FCM push notification to registered device tokens.
+- Flutter already registers FCM tokens through POST /api/v1/notifications/register-token and displays foreground FCM messages in the Android notification bar.
+- Laravel urgent push payload should include notification title/body or data keys such as type=urgent, title/campaign_title, body/message/summary, blood_group, center_id, center_name, and campaign_id.
+- If Laravel sends a normal FCM notification payload while the app is in background, Android/Firebase will show it in the notification bar automatically.
+- If Laravel sends a data payload while the app is foreground, Flutter now builds a notification-bar alert using the urgent request fields.
+

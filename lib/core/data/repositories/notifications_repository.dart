@@ -29,6 +29,10 @@ class NotificationsRepository {
     await _api.post('/notifications/$id/read');
   }
 
+  Future<void> delete(int id) async {
+    await _api.delete('/notifications/$id');
+  }
+
   Future<void> registerToken({
     required String token,
     required String deviceType,
