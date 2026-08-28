@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:nbts/core/data/repositories/notifications_repository.dart';
+import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/notifications/notification_counter.dart';
 
 @pragma('vm:entry-point')
@@ -69,6 +70,21 @@ class NotificationService {
     }
   }
 
+  Future<void> unregisterDeviceToken() async {
+    if (!_firebaseReady) return;
+    try {
+      final messaging = _messaging;
+      if (messaging == null) return;
+      final token = await messaging.getToken().timeout(
+        const Duration(seconds: 8),
+      );
+      if (token == null || token.isEmpty) return;
+      await _notifications.unregisterToken(token);
+    } catch (e) {
+      debugPrint('Could not unregister notification token: $e');
+    }
+  }
+
   Future<void> dispose() async {
     await _tokenRefreshSub?.cancel();
     await _foregroundMessageSub?.cancel();
@@ -97,11 +113,13 @@ class NotificationService {
 
     final type = data['type']?.toString().toLowerCase() ?? '';
     if (type.contains('urgent') || type.contains('stock')) {
-      return 'Urgent blood request';
+      return _t('notifications.urgentTitle');
     }
-    if (type.contains('appointment')) return 'Appointment reminder';
-    if (type.contains('campaign')) return 'NBTS campaign';
-    return 'NBTS update';
+    if (type.contains('appointment')) {
+      return _t('notifications.appointmentReminder');
+    }
+    if (type.contains('campaign')) return _t('notifications.campaignTitle');
+    return _t('notifications.updateTitle');
   }
 
   String _messageBody(RemoteMessage message) {
@@ -126,6 +144,8 @@ class NotificationService {
     if (parts.isNotEmpty) return parts.join(' - ');
     return '';
   }
+
+  String _t(String key) => AppStrings.text(key, LanguageController.code.value);
 
   Future<void> _showSystemNotification({
     required String title,
@@ -156,4 +176,3 @@ class NotificationService {
     return 'android';
   }
 }
-

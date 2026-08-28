@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:nbts/core/api/api_config.dart';
+import 'package:nbts/core/localization/app_language.dart';
 
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode, this.body, this.errors});
@@ -16,18 +17,49 @@ class ApiException implements Exception {
   bool get isUnauthorized => statusCode == 401;
   bool get isValidation => statusCode == 422;
   bool get isNetwork => statusCode == null;
+  String get safeMessage => _safeForDisplay(message);
 
   String firstError([String? field]) {
-    if (errors == null || errors!.isEmpty) return message;
+    if (errors == null || errors!.isEmpty) return safeMessage;
     if (field != null && errors!.containsKey(field)) {
       final list = errors![field]!;
-      if (list.isNotEmpty) return list.first;
+      if (list.isNotEmpty) return _safeForDisplay(list.first);
     }
-    return errors!.values.first.first;
+    return _safeForDisplay(errors!.values.first.first);
   }
 
   @override
   String toString() => 'ApiException($statusCode): $message';
+
+  static String _safeForDisplay(String value) {
+    final lower = value.toLowerCase();
+    if (lower.contains('firebase-service-account.json') ||
+        (lower.contains('firebase') &&
+            lower.contains('failed to open stream'))) {
+      return AppStrings.text(
+        'api.firebaseConfigMissing',
+        LanguageController.code.value,
+      );
+    }
+    if (lower.contains('splfileobject::__construct') ||
+        lower.contains('failed to open stream') ||
+        lower.contains('no such file or directory')) {
+      return AppStrings.text(
+        'api.serverConfigMissing',
+        LanguageController.code.value,
+      );
+    }
+    if (lower.contains('/home/') ||
+        lower.contains('/var/www') ||
+        lower.contains('c:\\') ||
+        lower.contains('stack trace')) {
+      return AppStrings.text(
+        'api.serverConfigError',
+        LanguageController.code.value,
+      );
+    }
+    return value;
+  }
 }
 
 typedef TokenProvider = String? Function();
@@ -116,12 +148,14 @@ class ApiClient {
   Future<dynamic> delete(
     String path, {
     Map<String, String>? headers,
+    Map<String, dynamic>? body,
     bool authenticated = true,
   }) async {
     return _send(
       () => _httpClient.delete(
         ApiConfig.endpoint(path),
         headers: _headers(headers, authenticated),
+        body: body == null ? null : jsonEncode(body),
       ),
     );
   }
@@ -145,6 +179,7 @@ class ApiClient {
     final base = <String, String>{
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'X-Locale': LanguageController.code.value,
     };
     if (auth) {
       final token = tokenProvider?.call();

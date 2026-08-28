@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/routes/app_routes.dart';
@@ -73,22 +75,36 @@ class _SplashScreenState extends State<SplashScreen>
     _pulseController.repeat(reverse: true);
 
     await Future.wait([
-      initFuture,
+      initFuture.timeout(const Duration(seconds: 12), onTimeout: () {}),
       Future.delayed(const Duration(milliseconds: 2200)),
     ]);
     if (!mounted) return;
 
-    var route = AppRoutes.welcome;
-    if (Services.instance.tokens.isAuthenticated) {
-      final user = await Services.instance.auth.validateSession();
-      if (user != null) {
-        route = user.isDonorProfileComplete
-            ? AppRoutes.dashboard
-            : AppRoutes.completeProfile;
-      }
-    }
+    final route = await _resolveStartRoute();
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, route);
+  }
+
+  Future<String> _resolveStartRoute() async {
+    if (!Services.instance.tokens.isAuthenticated) return AppRoutes.welcome;
+
+    try {
+      final user = await Services.instance.auth.validateSession().timeout(
+        const Duration(seconds: 12),
+      );
+      if (user == null) return AppRoutes.welcome;
+      return user.isDonorProfileComplete
+          ? AppRoutes.dashboard
+          : AppRoutes.completeProfile;
+    } on TimeoutException {
+      return Services.instance.tokens.isAuthenticated
+          ? AppRoutes.dashboard
+          : AppRoutes.welcome;
+    } catch (_) {
+      return Services.instance.tokens.isAuthenticated
+          ? AppRoutes.dashboard
+          : AppRoutes.welcome;
+    }
   }
 
   @override

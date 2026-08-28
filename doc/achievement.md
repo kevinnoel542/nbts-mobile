@@ -523,3 +523,38 @@ Laravel can keep the backend field if needed for admin/internal policy, but dono
 - If Laravel sends a normal FCM notification payload while the app is in background, Android/Firebase will show it in the notification bar automatically.
 - If Laravel sends a data payload while the app is foreground, Flutter now builds a notification-bar alert using the urgent request fields.
 
+
+## 2026-08-28 Laravel Contract Production Alignment
+- Read the Laravel contract at C:\Users\PRODUCTION\Desktop\UJUGU\NBTS-laravel\NBTS-laravel\docs\technical\api.md and C:\Users\PRODUCTION\Desktop\UJUGU\NBTS-laravel\NBTS-laravel\docs\evidence\achievement.md.
+- Flutter API requests now include X-Locale using the current app language code so Laravel can return English or Swahili messages consistently.
+- Flutter ApiClient DELETE requests now support JSON bodies for Laravel endpoints such as DELETE /api/v1/notifications/device-token.
+- Flutter notification service can unregister the current FCM device token before logout.
+- Profile sign-out now attempts FCM device-token unregister before revoking the Laravel/Sanctum session.
+- Laravel docs confirm DELETE /api/v1/notifications/{notification}, DELETE /api/v1/notifications/device-token, POST /api/v1/profile/photo, appointment SMS reminder service, urgent campaigns, and notification/FCM contracts exist or are defined in the backend contract.
+
+## 2026-08-28 Mobile Production Hardening
+- Laravel/Sanctum auth tokens now use flutter_secure_storage instead of SharedPreferences, with automatic migration from the older local storage keys.
+- Notification objects now read Laravel action_url and structured data payloads.
+- Notifications screen now supports All, Unread, Appointments, and Urgent filters.
+- Notification detail sheets now show donor-safe action buttons. Appointment notices open appointments, donor-card notices open the donor card, profile notices open profile, and urgent/campaign notices open booking when center_id is supplied or centers when it is not.
+- Firebase foreground notification fallback titles now follow the selected app language.
+- Android release signing is ready for android/key.properties and real keystore values while keeping debug builds runnable during development.
+- Android launcher label now shows NBTS, and signing secret files are ignored by Git.
+- Laravel/admin should continue sending notification data fields such as action_url, type, urgent, campaign_id, center_id, center_name, blood_group, starts_at, and ends_at so Flutter can route donors to the correct mobile destination.
+
+## 2026-08-28 API IP Update
+- Updated Flutter default API base URL to http://192.168.0.161:8003/api/v1 for the current Laravel server.
+
+## 2026-08-28 Splash Loading Fix
+- Fixed a startup issue where the splash screen could keep loading when a saved Laravel token existed but session validation timed out or failed during an IP/server change.
+- Splash startup now uses a timeout around service initialization and session validation.
+- If Laravel returns 401, Flutter still clears the invalid token and goes to welcome/sign in.
+- If Laravel is temporarily unreachable but a token still exists, Flutter proceeds to the dashboard so pages can show their own refresh/error states instead of trapping the user on splash.
+- Confirmed from this machine that http://192.168.0.161:8003/api/v1/blood-centers returns HTTP 200.
+
+## 2026-08-28 Safe API Error Display
+- Fixed the mobile app so Laravel configuration errors are no longer shown with raw server paths such as firebase-service-account.json locations.
+- Flutter now maps missing Firebase service account errors to a clean user message in English or Swahili.
+- Flutter now uses safe API messages across login, registration, profile, appointments, centers, history, donor card, and notifications.
+- Laravel still needs the real backend fix: place the Firebase service account JSON at the configured path or update the Laravel Firebase credential path so POST /api/v1/auth/firebase can verify Firebase tokens.
+

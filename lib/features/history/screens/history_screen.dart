@@ -67,7 +67,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
           if (donationsSnap.hasError) {
             final message = donationsSnap.error is ApiException
-                ? (donationsSnap.error as ApiException).message
+                ? (donationsSnap.error as ApiException).safeMessage
                 : context.t('history.loadFailed');
             return RefreshIndicator(
               onRefresh: _refresh,
@@ -287,7 +287,10 @@ class _HistoryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _text(record.centerName, fallback: context.t('history.centerFallback')),
+                  _text(
+                    record.centerName,
+                    fallback: context.t('history.centerFallback'),
+                  ),
                   style: TextStyle(
                     color: scheme.onSurface,
                     fontSize: 14,
@@ -403,5 +406,3 @@ void _showHistoryFilterInfo(BuildContext context) {
     ),
   );
 }
-
-

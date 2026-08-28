@@ -91,6 +91,12 @@ class AppStrings {
     'common.pendingMedical': 'Pending medical verification',
     'common.seeAll': 'See all',
     'common.refresh': 'Refresh',
+    'api.firebaseConfigMissing':
+        'Firebase login is not configured on the server. Ask NBTS admin to add the Firebase service account file.',
+    'api.serverConfigMissing':
+        'Server configuration is missing a required file. Please contact NBTS support.',
+    'api.serverConfigError':
+        'Server configuration error. Please contact NBTS support.',
     'dashboard.welcome': 'Welcome',
     'dashboard.welcomeDonor': 'Welcome donor',
     'dashboard.quickActions': 'Quick actions',
@@ -203,6 +209,23 @@ class AppStrings {
     'notifications.empty': 'No notifications yet',
     'notifications.emptyMessage':
         'NBTS alerts, appointments, and campaign updates will appear here.',
+    'notifications.all': 'All',
+    'notifications.unread': 'Unread',
+    'notifications.appointments': 'Appointments',
+    'notifications.urgent': 'Urgent',
+    'notifications.noFiltered': 'Nothing here',
+    'notifications.noFilteredMessage':
+        'Try another notification filter or pull to refresh.',
+    'notifications.bookDonation': 'Book donation',
+    'notifications.findCenters': 'Find centers',
+    'notifications.viewAppointments': 'View appointments',
+    'notifications.openCard': 'Open card',
+    'notifications.openProfile': 'Open profile',
+    'notifications.openHistory': 'Open history',
+    'notifications.urgentTitle': 'Urgent blood request',
+    'notifications.appointmentReminder': 'Appointment reminder',
+    'notifications.campaignTitle': 'NBTS campaign',
+    'notifications.updateTitle': 'NBTS update',
     'appointments.title': 'Appointments',
     'appointments.unavailable': 'Appointments unavailable',
     'appointments.next': 'Next appointment',
@@ -338,6 +361,12 @@ class AppStrings {
     'common.pendingMedical': 'Inasubiri uthibitisho wa kitabibu',
     'common.seeAll': 'Tazama yote',
     'common.refresh': 'Onyesha upya',
+    'api.firebaseConfigMissing':
+        'Kuingia kwa Firebase hakujasanidiwa kwenye seva. Mwombe msimamizi wa NBTS kuongeza faili ya Firebase service account.',
+    'api.serverConfigMissing':
+        'Usanidi wa seva umekosa faili muhimu. Tafadhali wasiliana na msaada wa NBTS.',
+    'api.serverConfigError':
+        'Kuna tatizo la usanidi wa seva. Tafadhali wasiliana na msaada wa NBTS.',
     'dashboard.welcome': 'Karibu',
     'dashboard.welcomeDonor': 'Karibu mchangiaji',
     'dashboard.quickActions': 'Vitendo',
@@ -452,6 +481,23 @@ class AppStrings {
     'notifications.empty': 'Hakuna arifa bado',
     'notifications.emptyMessage':
         'Arifa za NBTS, miadi, na kampeni zitaonekana hapa.',
+    'notifications.all': 'Zote',
+    'notifications.unread': 'Mpya',
+    'notifications.appointments': 'Miadi',
+    'notifications.urgent': 'Dharura',
+    'notifications.noFiltered': 'Hakuna hapa',
+    'notifications.noFilteredMessage':
+        'Jaribu kichujio kingine au vuta kuonyesha upya.',
+    'notifications.bookDonation': 'Weka miadi',
+    'notifications.findCenters': 'Tafuta vituo',
+    'notifications.viewAppointments': 'Tazama miadi',
+    'notifications.openCard': 'Fungua kadi',
+    'notifications.openProfile': 'Fungua wasifu',
+    'notifications.openHistory': 'Fungua historia',
+    'notifications.urgentTitle': 'Ombi la dharura la damu',
+    'notifications.appointmentReminder': 'Kikumbusho cha miadi',
+    'notifications.campaignTitle': 'Kampeni ya NBTS',
+    'notifications.updateTitle': 'Taarifa ya NBTS',
     'appointments.title': 'Miadi',
     'appointments.unavailable': 'Miadi haipatikani',
     'appointments.next': 'Miadi ijayo',

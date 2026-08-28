@@ -175,6 +175,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
   Future<void> _useAnotherAccount() async {
     setState(() => _submitting = true);
+    await Services.instance.notificationService.unregisterDeviceToken();
     await Services.instance.auth.clearLocalSession();
     try {
       await FirebaseSocialAuthService.signOut();
@@ -254,7 +255,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       }
       setState(() {
         _fieldErrors = e.errors;
-        _formError = e.errors == null ? e.message : e.firstError();
+        _formError = e.firstError();
       });
     } catch (e) {
       if (!mounted) return;
@@ -634,4 +635,3 @@ class _Field extends StatelessWidget {
     );
   }
 }
-

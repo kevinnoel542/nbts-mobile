@@ -85,7 +85,7 @@ class _FindCentersScreenState extends State<FindCentersScreen> {
 
                 if (snapshot.hasError) {
                   final message = snapshot.error is ApiException
-                      ? (snapshot.error as ApiException).message
+                      ? (snapshot.error as ApiException).safeMessage
                       : context.t('centers.loadFailed');
                   return _StateList(
                     onRefresh: _refresh,
@@ -327,5 +327,3 @@ class _Detail extends StatelessWidget {
     );
   }
 }
-
-

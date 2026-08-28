@@ -18,6 +18,7 @@ dependencies:
   http: ^1.6.0
 
   shared_preferences: ^2.5.5
+  flutter_secure_storage: ^9.2.4
   firebase_core: ^4.2.1
 
   firebase_auth: ^6.1.2
@@ -64,14 +65,3 @@ flutter:
     - assets/icon/
     - assets/auth/
     - assets/nav/
-
-  
-
-
-
-
-
-
-
-
-

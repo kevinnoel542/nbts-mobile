@@ -73,7 +73,7 @@ Blood group: ${card.bloodGroup ?? 'Pending'}
 
           if (snapshot.hasError) {
             final message = snapshot.error is ApiException
-                ? (snapshot.error as ApiException).message
+                ? (snapshot.error as ApiException).safeMessage
                 : 'Could not load your donor card.';
             return RefreshIndicator(
               onRefresh: _refresh,

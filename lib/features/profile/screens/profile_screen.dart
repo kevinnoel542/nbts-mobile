@@ -45,6 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _signOut() async {
+    await Services.instance.notificationService.unregisterDeviceToken();
     await Services.instance.auth.logout();
     try {
       await FirebaseSocialAuthService.signOut();
@@ -115,9 +116,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'language': language == 'Swahili' ? 'sw' : 'en',
       });
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.t('profile.languageUpdated'))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t('profile.languageUpdated'))),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       await LanguageController.set(previous);
@@ -365,7 +366,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           if (snapshot.hasError) {
             final message = snapshot.error is ApiException
-                ? (snapshot.error as ApiException).message
+                ? (snapshot.error as ApiException).safeMessage
                 : context.t('profile.loadFailed');
             return RefreshIndicator(
               onRefresh: _refresh,
@@ -869,9 +870,3 @@ String? _languageLabel(String? value) {
     _ => null,
   };
 }
-
-
-
-
-
-

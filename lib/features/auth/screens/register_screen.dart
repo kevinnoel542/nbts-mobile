@@ -116,7 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       setState(() {
         _fieldErrors = e.errors;
-        _formError = e.errors == null ? e.message : e.firstError();
+        _formError = e.firstError();
       });
     } catch (e) {
       if (!mounted) return;
@@ -193,7 +193,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       setState(() {
         _fieldErrors = e.errors;
-        _formError = e.errors == null ? e.message : null;
+        _formError = e.firstError();
       });
     } catch (_) {
       if (!mounted) return;

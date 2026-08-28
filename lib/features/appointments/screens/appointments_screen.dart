@@ -101,7 +101,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
           if (listSnap.hasError) {
             final message = listSnap.error is ApiException
-                ? (listSnap.error as ApiException).message
+                ? (listSnap.error as ApiException).safeMessage
                 : context.t('appointments.unavailable');
             return RefreshIndicator(
               onRefresh: _refresh,
@@ -224,7 +224,10 @@ class _UpcomingCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   context.t('appointments.status'),
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               StatusPill(
@@ -261,14 +264,18 @@ class _UpcomingCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: _canManage(appointment) ? onReschedule : null,
-                  child: FittedBox(child: Text(context.t('appointments.reschedule'))),
+                  child: FittedBox(
+                    child: Text(context.t('appointments.reschedule')),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton(
                   onPressed: _canManage(appointment) ? onCancel : null,
-                  child: FittedBox(child: Text(context.t('appointments.cancel'))),
+                  child: FittedBox(
+                    child: Text(context.t('appointments.cancel')),
+                  ),
                 ),
               ),
             ],
@@ -348,7 +355,9 @@ class _AppointmentCard extends StatelessWidget {
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'reschedule',
-                child: FittedBox(child: Text(context.t('appointments.reschedule'))),
+                child: FittedBox(
+                  child: Text(context.t('appointments.reschedule')),
+                ),
               ),
               PopupMenuItem(
                 value: 'cancel',
@@ -434,4 +443,3 @@ bool _canManage(Appointment appointment) {
   final status = appointment.status?.toLowerCase().trim();
   return status != 'completed' && status != 'cancelled';
 }
-

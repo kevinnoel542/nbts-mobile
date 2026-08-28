@@ -136,7 +136,9 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       return;
     }
     if (!slot.available) {
-      setState(() => _formError = slot.reason ?? context.t('book.timeUnavailable'));
+      setState(
+        () => _formError = slot.reason ?? context.t('book.timeUnavailable'),
+      );
       return;
     }
 
@@ -159,10 +161,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
         final active = await Services.instance.appointments.fetchUpcoming();
         if (active != null) {
           if (!mounted) return;
-          setState(
-            () => _formError =
-                context.t('book.activeExists'),
-          );
+          setState(() => _formError = context.t('book.activeExists'));
           return;
         }
         await Services.instance.appointments.book(
@@ -367,7 +366,7 @@ class _CenterPicker extends StatelessWidget {
 
         if (snapshot.hasError && selectedCenter == null) {
           final message = snapshot.error is ApiException
-              ? (snapshot.error as ApiException).message
+              ? (snapshot.error as ApiException).safeMessage
               : context.t('book.centersLoadFailed');
           return AppCard(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -625,7 +624,7 @@ class _SlotSection extends StatelessWidget {
 
         if (snapshot.hasError) {
           final message = snapshot.error is ApiException
-              ? (snapshot.error as ApiException).message
+              ? (snapshot.error as ApiException).safeMessage
               : context.t('book.timesLoadFailed');
           return AppCard(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -981,5 +980,3 @@ String? _formatDate(DateTime? date) {
   ];
   return '${months[date.month - 1]} ${date.day}, ${date.year}';
 }
-
-

@@ -6,8 +6,15 @@ class NotificationsRepository {
   NotificationsRepository({required ApiClient api}) : _api = api;
   final ApiClient _api;
 
-  Future<List<UserNotification>> fetchAll() async {
-    final response = await _api.get('/notifications');
+  Future<List<UserNotification>> fetchAll({bool? unread, String? type}) async {
+    final queryParameters = <String, dynamic>{
+      if (unread != null) 'unread': unread ? 1 : 0,
+      if (type != null && type.isNotEmpty) 'type': type,
+    };
+    final response = await _api.get(
+      '/notifications',
+      queryParameters: queryParameters.isEmpty ? null : queryParameters,
+    );
     return readListPayload(
       response,
     ).map(UserNotification.fromJson).toList(growable: false);
@@ -31,6 +38,11 @@ class NotificationsRepository {
 
   Future<void> delete(int id) async {
     await _api.delete('/notifications/$id');
+  }
+
+  Future<void> unregisterToken(String token) async {
+    if (token.isEmpty) return;
+    await _api.delete('/notifications/device-token', body: {'token': token});
   }
 
   Future<void> registerToken({
