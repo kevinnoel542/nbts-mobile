@@ -50,9 +50,9 @@ class _DonorCardScreenState extends State<DonorCardScreen> {
               final text =
                   '''
 NBTS Donor Card
-Name: ${card.name ?? 'Pending'}
+Name: ${card.name ?? context.t('common.pending')}
 NBTS ID: ${card.donorId}
-Blood group: ${card.bloodGroup ?? 'Pending'}
+Blood group: ${card.bloodGroup ?? context.t('common.pending')}
 ''';
               await Clipboard.setData(ClipboardData(text: text.trim()));
               if (!context.mounted) return;
@@ -74,7 +74,7 @@ Blood group: ${card.bloodGroup ?? 'Pending'}
           if (snapshot.hasError) {
             final message = snapshot.error is ApiException
                 ? (snapshot.error as ApiException).safeMessage
-                : 'Could not load your donor card.';
+                : context.t('donorCard.loadFailed');
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
@@ -83,7 +83,7 @@ Blood group: ${card.bloodGroup ?? 'Pending'}
                 children: [
                   EmptyState(
                     icon: Icons.badge_outlined,
-                    title: 'Donor card unavailable',
+                    title: context.t('donorCard.unavailable'),
                     message: message,
                   ),
                 ],
@@ -237,13 +237,13 @@ class _IdentityCard extends StatelessWidget {
                       Text(
                         _text(
                           card.name,
-                          fallback: context.t('dashboard.welcomeDonor'),
+                          fallback: context.t('profile.pendingName'),
                         ),
                         style: TextStyle(
                           color: scheme.onSurface,
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: -0.4,
+                          letterSpacing: 0,
                           height: 1.1,
                         ),
                       ),
@@ -306,7 +306,7 @@ class _IdentityCard extends StatelessWidget {
                   ),
                   Expanded(
                     child: _MiniField(
-                      label: 'Tier',
+                      label: context.t('donorCard.tier'),
                       value: _text(
                         card.loyaltyTier,
                         fallback: context.t('common.pending'),
@@ -371,6 +371,9 @@ class _QrPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final qrSize = (MediaQuery.sizeOf(context).width - 112)
+        .clamp(180.0, 232.0)
+        .toDouble();
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -381,7 +384,7 @@ class _QrPanel extends StatelessWidget {
               color: scheme.onSurface,
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              letterSpacing: -0.2,
+              letterSpacing: 0,
             ),
           ),
           const SizedBox(height: 4),
@@ -400,7 +403,7 @@ class _QrPanel extends StatelessWidget {
             child: QrImageView(
               data: card.qrPayloadText,
               version: QrVersions.auto,
-              size: 220,
+              size: qrSize,
               backgroundColor: Colors.white,
               eyeStyle: const QrEyeStyle(
                 eyeShape: QrEyeShape.square,
@@ -425,20 +428,35 @@ String _text(String? value, {required String fallback}) {
 
 String? _formatDate(DateTime? date) {
   if (date == null) return null;
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
+  final months = LanguageController.code.value == 'sw'
+      ? const [
+          'Jan',
+          'Feb',
+          'Mac',
+          'Apr',
+          'Mei',
+          'Jun',
+          'Jul',
+          'Ago',
+          'Sep',
+          'Okt',
+          'Nov',
+          'Des',
+        ]
+      : const [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
   return '${months[date.month - 1]} ${date.day}, ${date.year}';
 }
 

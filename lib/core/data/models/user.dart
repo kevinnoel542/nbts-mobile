@@ -77,12 +77,16 @@ class User {
           readString(json, [
             'photo_url',
             'profile_photo_url',
+            'profile_photo_path',
+            'photo_path',
             'avatar_url',
             'picture',
           ]) ??
           readString(profile, [
             'photo_url',
             'profile_photo_url',
+            'profile_photo_path',
+            'photo_path',
             'avatar_url',
             'picture',
           ]),

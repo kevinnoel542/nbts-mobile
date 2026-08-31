@@ -21,4 +21,16 @@ class ApiConfig {
       },
     );
   }
+
+  static String publicUrl(String value) {
+    final cleaned = value.trim();
+    final parsed = Uri.tryParse(cleaned);
+    if (parsed != null && parsed.hasScheme) return cleaned;
+
+    final apiUri = Uri.parse(baseUrl);
+    final origin = apiUri.replace(path: '/', query: null, fragment: null);
+    return origin
+        .resolve(cleaned.startsWith('/') ? cleaned : '/$cleaned')
+        .toString();
+  }
 }

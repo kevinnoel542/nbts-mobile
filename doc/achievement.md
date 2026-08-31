@@ -558,3 +558,12 @@ Laravel can keep the backend field if needed for admin/internal policy, but dono
 - Flutter now uses safe API messages across login, registration, profile, appointments, centers, history, donor card, and notifications.
 - Laravel still needs the real backend fix: place the Firebase service account JSON at the configured path or update the Laravel Firebase credential path so POST /api/v1/auth/firebase can verify Firebase tokens.
 
+## 2026-08-28 Profile and Donor Card Polish
+- Upgraded the profile header into a more official donor card style with a profile-completion badge and safer metric spacing.
+- Profile photos now support Firebase/Google image URLs and Laravel relative storage paths.
+- Local profile photo upload still uses POST /api/v1/profile/photo, and Flutter now displays a clean localized failure message if upload fails.
+- Medical summary now opens a full donor summary sheet with identity, contact, eligibility, preferred center, total donations, and total volume.
+- Emergency contact now opens real saved emergency-contact details with an edit action instead of only showing a static explanation.
+- Donor card fallbacks, unavailable state, tier label, and date formatting now respond to English/Swahili language mode.
+- Laravel can return profile_photo_url or profile_photo_path; Flutter will display either when reachable from the mobile device.
+
