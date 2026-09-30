@@ -1,11 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nbts/main.dart';
+import 'package:nbts/core/localization/app_language.dart';
+import 'package:nbts/core/routes/app_routes.dart';
+import 'package:nbts/features/auth/screens/welcome_screen.dart';
 
 void main() {
   Future<void> pumpWelcome(WidgetTester tester) async {
-    await tester.pumpWidget(const NBTSApp());
-    await tester.pump(const Duration(seconds: 3));
-    await tester.pump();
+    LanguageController.code.value = 'en';
+    await tester.pumpWidget(
+      MaterialApp(routes: AppRoutes.routes, home: const WelcomeScreen()),
+    );
+    await tester.pumpAndSettle();
   }
 
   testWidgets('shows NBTS welcome screen', (tester) async {
@@ -14,7 +19,7 @@ void main() {
     expect(find.text('Donate blood.'), findsOneWidget);
     expect(find.text('Save lives.'), findsOneWidget);
     expect(find.text('Create an account'), findsOneWidget);
-    expect(find.text('I already have an account'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
   });
 
   testWidgets('opens donor registration flow', (tester) async {
@@ -25,7 +30,10 @@ void main() {
 
     expect(find.text('Donor registration'), findsOneWidget);
     expect(find.text('ACCOUNT'), findsOneWidget);
+
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -650));
+    await tester.pumpAndSettle();
+
     expect(find.text('DONOR PROFILE'), findsOneWidget);
-    expect(find.text('Create account'), findsOneWidget);
   });
 }

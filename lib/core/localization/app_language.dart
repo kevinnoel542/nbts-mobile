@@ -211,6 +211,9 @@ class AppStrings {
         'Track your donation impact, verified visits, and next action.',
     'history.impact': 'Impact',
     'history.totalDonated': 'Total donated',
+    'history.livesTouched': 'Estimated lives touched',
+    'history.lastDonation': 'Last donation',
+    'history.noneYet': 'None yet',
     'history.noRecords': 'No records yet',
     'history.noRecordsMessage':
         'Verified donation records will appear once NBTS syncs your data.',
@@ -499,6 +502,9 @@ class AppStrings {
         'Fuatilia mchango wako, ziara zilizothibitishwa, na hatua inayofuata.',
     'history.impact': 'Mchango wako',
     'history.totalDonated': 'Jumla iliyochangiwa',
+    'history.livesTouched': 'Maisha yaliyoguswa (makadirio)',
+    'history.lastDonation': 'Mchango wa mwisho',
+    'history.noneYet': 'Bado hakuna',
     'history.noRecords': 'Hakuna rekodi bado',
     'history.noRecordsMessage':
         'Rekodi zilizothibitishwa zitaonekana NBTS ikisawazisha taarifa zako.',

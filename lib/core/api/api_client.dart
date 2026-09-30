@@ -63,13 +63,15 @@ class ApiException implements Exception {
 }
 
 typedef TokenProvider = String? Function();
+typedef UnauthorizedHandler = Future<void> Function();
 
 class ApiClient {
-  ApiClient({http.Client? httpClient, this.tokenProvider})
+  ApiClient({http.Client? httpClient, this.tokenProvider, this.onUnauthorized})
     : _httpClient = httpClient ?? http.Client();
 
   final http.Client _httpClient;
   TokenProvider? tokenProvider;
+  UnauthorizedHandler? onUnauthorized;
 
   static const Duration _timeout = Duration(seconds: 20);
 
@@ -84,6 +86,7 @@ class ApiClient {
         ApiConfig.endpoint(path, queryParameters),
         headers: _headers(headers, authenticated),
       ),
+      authenticated: authenticated,
     );
   }
 
@@ -99,6 +102,7 @@ class ApiClient {
         headers: _headers(headers, authenticated),
         body: jsonEncode(body ?? const {}),
       ),
+      authenticated: authenticated,
     );
   }
 
@@ -114,6 +118,7 @@ class ApiClient {
         headers: _headers(headers, authenticated),
         body: jsonEncode(body ?? const {}),
       ),
+      authenticated: authenticated,
     );
   }
 
@@ -135,7 +140,7 @@ class ApiClient {
       );
       final streamed = await request.send().timeout(_timeout);
       final response = await http.Response.fromStream(streamed);
-      return _decode(response);
+      return _decodeResponse(response, authenticated: authenticated);
     } on TimeoutException {
       throw const ApiException('Request timed out. Check your connection.');
     } on SocketException catch (e) {
@@ -157,19 +162,37 @@ class ApiClient {
         headers: _headers(headers, authenticated),
         body: body == null ? null : jsonEncode(body),
       ),
+      authenticated: authenticated,
     );
   }
 
-  Future<dynamic> _send(Future<http.Response> Function() send) async {
+  Future<dynamic> _send(
+    Future<http.Response> Function() send, {
+    required bool authenticated,
+  }) async {
     try {
       final response = await send().timeout(_timeout);
-      return _decode(response);
+      return _decodeResponse(response, authenticated: authenticated);
     } on TimeoutException {
       throw const ApiException('Request timed out. Check your connection.');
     } on SocketException catch (e) {
       throw ApiException('Cannot reach server. ${e.message}');
     } on http.ClientException catch (e) {
       throw ApiException('Network error: ${e.message}');
+    }
+  }
+
+  Future<dynamic> _decodeResponse(
+    http.Response response, {
+    required bool authenticated,
+  }) async {
+    try {
+      return _decode(response);
+    } on ApiException catch (error) {
+      if (authenticated && error.isUnauthorized) {
+        await onUnauthorized?.call();
+      }
+      rethrow;
     }
   }
 

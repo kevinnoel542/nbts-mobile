@@ -3,7 +3,7 @@ import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/service_locator.dart';
 import 'package:nbts/core/data/models/donation_record.dart';
-import 'package:nbts/core/data/models/user.dart';
+import 'package:nbts/core/data/models/donation_summary.dart';
 import 'package:nbts/core/routes/app_routes.dart';
 import 'package:nbts/core/theme/app_tokens.dart';
 import 'package:nbts/core/widgets/app_card.dart';
@@ -19,8 +19,7 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  late Future<User?> _profileFuture;
-  late Future<List<DonationRecord>> _donationsFuture;
+  late Future<_HistoryData> _historyFuture;
 
   @override
   void initState() {
@@ -29,19 +28,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _load() {
-    _profileFuture = () async {
-      try {
-        return await Services.instance.profile.fetch();
-      } catch (_) {
-        return null;
-      }
-    }();
-    _donationsFuture = Services.instance.donations.fetchAll();
+    _historyFuture = _fetchHistory();
+  }
+
+  Future<_HistoryData> _fetchHistory() async {
+    final results = await Future.wait<dynamic>([
+      Services.instance.donations.fetchAll(),
+      Services.instance.donations.fetchSummary(),
+    ]);
+    return _HistoryData(
+      donations: results[0] as List<DonationRecord>,
+      summary: results[1] as DonationSummary,
+    );
   }
 
   Future<void> _refresh() async {
     setState(_load);
-    await Future.wait([_profileFuture, _donationsFuture]);
+    await _historyFuture;
   }
 
   @override
@@ -58,16 +61,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      body: FutureBuilder<List<DonationRecord>>(
-        future: _donationsFuture,
-        builder: (context, donationsSnap) {
-          if (donationsSnap.connectionState == ConnectionState.waiting) {
+      body: FutureBuilder<_HistoryData>(
+        future: _historyFuture,
+        builder: (context, historySnap) {
+          if (historySnap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (donationsSnap.hasError) {
-            final message = donationsSnap.error is ApiException
-                ? (donationsSnap.error as ApiException).safeMessage
+          if (historySnap.hasError) {
+            final message = historySnap.error is ApiException
+                ? (historySnap.error as ApiException).safeMessage
                 : context.t('history.loadFailed');
             return RefreshIndicator(
               onRefresh: _refresh,
@@ -85,98 +88,154 @@ class _HistoryScreenState extends State<HistoryScreen> {
             );
           }
 
-          final donations = donationsSnap.data ?? const <DonationRecord>[];
-          return FutureBuilder<User?>(
-            future: _profileFuture,
-            builder: (context, profileSnap) {
-              final user = profileSnap.data;
-              return RefreshIndicator(
-                onRefresh: _refresh,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.sm,
-                    AppSpacing.lg,
-                    AppSpacing.xxl + AppSpacing.lg,
-                  ),
+          final history = historySnap.data!;
+          final donations = history.donations;
+          final summary = history.summary;
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.xxl + AppSpacing.lg,
+              ),
+              children: [
+                _ScreenHeader(
+                  icon: Icons.history_rounded,
+                  title: context.t('history.title'),
+                  subtitle: context.t('history.subtitle'),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                SectionHeader(context.t('history.impact')),
+                Row(
                   children: [
-                    _ScreenHeader(
-                      icon: Icons.history_rounded,
-                      title: context.t('history.title'),
-                      subtitle: context.t('history.subtitle'),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    SectionHeader(context.t('history.impact')),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppCard(
-                            padding: const EdgeInsets.all(AppSpacing.md),
-                            child: StatTile(
-                              icon: Icons.water_drop_outlined,
-                              value: _liters(user, donations),
-                              unit: 'L',
-                              label: context.t('history.totalDonated'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: AppCard(
-                            padding: const EdgeInsets.all(AppSpacing.md),
-                            child: StatTile(
-                              icon: Icons.favorite_outline_rounded,
-                              value:
-                                  '${user?.totalDonations ?? donations.length}',
-                              label: context.t('dashboard.donations'),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    SectionHeader(context.t('dashboard.donations')),
-                    if (donations.isEmpty)
-                      AppCard(
+                    Expanded(
+                      child: AppCard(
                         padding: const EdgeInsets.all(AppSpacing.md),
-                        child: EmptyState(
-                          icon: Icons.history_toggle_off_rounded,
-                          title: context.t('history.noRecords'),
-                          message: context.t('history.noRecordsMessage'),
+                        child: StatTile(
+                          icon: Icons.water_drop_outlined,
+                          value: _liters(summary),
+                          unit: 'L',
+                          label: context.t('history.totalDonated'),
                         ),
-                      )
-                    else
-                      for (final d in donations)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                          child: _HistoryTile(record: d),
-                        ),
-                    const SizedBox(height: AppSpacing.xl),
-                    FilledButton.icon(
-                      onPressed: () => Navigator.pushNamed(
-                        context,
-                        AppRoutes.bookAppointment,
                       ),
-                      icon: const Icon(Icons.add_rounded),
-                      label: Text(context.t('history.scheduleNext')),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: AppCard(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: StatTile(
+                          icon: Icons.favorite_outline_rounded,
+                          value: '${summary.totalDonations}',
+                          label: context.t('dashboard.donations'),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              );
-            },
+                const SizedBox(height: AppSpacing.md),
+                AppCard(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.12),
+                          borderRadius: AppRadius.chip,
+                        ),
+                        child: Icon(
+                          Icons.favorite_outline_rounded,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 21,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              context.t('history.livesTouched'),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${context.t('history.lastDonation')}: ${_lastDonation(summary.lastDonation, context)}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        '${summary.livesTouched}',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                SectionHeader(context.t('dashboard.donations')),
+                if (donations.isEmpty)
+                  AppCard(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: EmptyState(
+                      icon: Icons.history_toggle_off_rounded,
+                      title: context.t('history.noRecords'),
+                      message: context.t('history.noRecordsMessage'),
+                    ),
+                  )
+                else
+                  for (final d in donations)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: _HistoryTile(record: d),
+                    ),
+                const SizedBox(height: AppSpacing.xl),
+                FilledButton.icon(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.bookAppointment),
+                  icon: const Icon(Icons.add_rounded),
+                  label: Text(context.t('history.scheduleNext')),
+                ),
+              ],
+            ),
           );
         },
       ),
     );
   }
 
-  static String _liters(User? user, List<DonationRecord> records) {
-    final ml =
-        user?.totalVolumeMl ??
-        records.fold<int>(0, (sum, record) => sum + (record.volumeMl ?? 0));
-    return (ml / 1000).toStringAsFixed(1);
+  static String _liters(DonationSummary summary) {
+    return summary.totalVolumeLiters.toStringAsFixed(1);
   }
+
+  static String _lastDonation(DateTime? date, BuildContext context) {
+    if (date == null) return context.t('history.noneYet');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
+}
+
+class _HistoryData {
+  const _HistoryData({required this.donations, required this.summary});
+
+  final List<DonationRecord> donations;
+  final DonationSummary summary;
 }
 
 class _ScreenHeader extends StatelessWidget {

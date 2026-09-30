@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:nbts/core/api/api_config.dart';
 import 'package:nbts/core/localization/app_language.dart';
 import 'package:nbts/core/theme/app_theme.dart';
 import 'package:nbts/core/theme/theme_controller.dart';
 import 'package:nbts/core/routes/app_routes.dart';
+import 'package:nbts/core/routes/app_navigation.dart';
 import 'package:nbts/features/splash/screens/splash_screen.dart';
+import 'package:nbts/features/auth/screens/welcome_screen.dart';
 import 'package:nbts/core/notifications/notification_messenger.dart';
 
 Future<void> main() async {
@@ -23,12 +26,15 @@ class NBTSApp extends StatelessWidget {
         valueListenable: ThemeController.mode,
         builder: (context, mode, _) => MaterialApp(
           title: 'NBTS Vitality',
+          navigatorKey: appNavigatorKey,
           scaffoldMessengerKey: notificationMessengerKey,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: mode,
-          home: const SplashScreen(),
+          home: ApiConfig.previewMode
+              ? const WelcomeScreen()
+              : const SplashScreen(),
           routes: AppRoutes.routes,
         ),
       ),

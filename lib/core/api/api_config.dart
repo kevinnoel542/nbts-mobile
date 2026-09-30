@@ -1,6 +1,11 @@
 class ApiConfig {
   const ApiConfig._();
 
+  static const previewMode = bool.fromEnvironment(
+    'UI_PREVIEW',
+    defaultValue: false,
+  );
+
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://192.168.0.161:8003/api/v1',

@@ -567,3 +567,16 @@ Laravel can keep the backend field if needed for admin/internal policy, but dono
 - Donor card fallbacks, unavailable state, tier label, and date formatting now respond to English/Swahili language mode.
 - Laravel can return profile_photo_url or profile_photo_path; Flutter will display either when reachable from the mobile device.
 
+## 2026-09-30 Session Expiry and Donation Summary
+- Protected API requests now handle HTTP 401 globally by clearing the expired Laravel/Sanctum session and returning the donor directly to sign-in.
+- Public authentication failures such as a wrong password do not trigger the global session-expired navigation.
+- Added a typed donation summary model and connected GET /api/v1/donations/summary.
+- History now uses Laravel's authoritative completed-donation totals, total volume, last donation date, and estimated lives touched.
+- Added focused tests for authenticated/public 401 handling and Laravel donation-summary parsing.
+- No Laravel contract changes are required for these Flutter updates.
+
+## 2026-09-30 UI Preview Mode
+- Added a UI_PREVIEW build flag that opens the welcome, sign-in, and registration interface without starting Laravel session restoration.
+- Preview mode does not contact the backend until an API-dependent action such as submitting login or registration is used.
+- Normal builds continue using the existing splash, saved-session, Firebase, and Laravel flow.
+

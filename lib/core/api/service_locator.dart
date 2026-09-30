@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:nbts/core/api/api_client.dart';
 import 'package:nbts/core/api/token_store.dart';
 import 'package:nbts/core/notifications/notification_service.dart';
+import 'package:nbts/core/routes/app_navigation.dart';
 import 'package:nbts/core/data/repositories/appointments_repository.dart';
 import 'package:nbts/core/data/repositories/articles_repository.dart';
 import 'package:nbts/core/data/repositories/auth_repository.dart';
@@ -18,7 +19,10 @@ class Services {
   static final Services instance = Services._();
 
   late final TokenStore tokens = TokenStore.instance;
-  late final ApiClient api = ApiClient(tokenProvider: () => tokens.token);
+  late final ApiClient api = ApiClient(
+    tokenProvider: () => tokens.token,
+    onUnauthorized: _handleUnauthorized,
+  );
 
   late final AuthRepository auth = AuthRepository(
     api: api,
@@ -45,6 +49,18 @@ class Services {
   );
 
   Future<void>? _initFuture;
+  bool _handlingUnauthorized = false;
+
+  Future<void> _handleUnauthorized() async {
+    if (_handlingUnauthorized || !tokens.isAuthenticated) return;
+    _handlingUnauthorized = true;
+    try {
+      await auth.clearLocalSession();
+      openExpiredSessionLogin();
+    } finally {
+      _handlingUnauthorized = false;
+    }
+  }
 
   Future<void> init() {
     return _initFuture ??= _init();
