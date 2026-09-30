@@ -216,6 +216,7 @@ class _UpcomingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
+      onTap: () => _showAppointmentDetails(context, appointment),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -301,6 +302,7 @@ class _AppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return AppCard(
+      onTap: () => _showAppointmentDetails(context, appointment),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
@@ -373,6 +375,63 @@ class _AppointmentCard extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showAppointmentDetails(BuildContext context, Appointment appointment) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              context.t('appointments.details'),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.calendar_month_outlined),
+              title: Text(_formatDateTime(appointment.scheduledAt)),
+              subtitle: Text(_statusLabel(context, appointment.status)),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.local_hospital_outlined),
+              title: Text(
+                _text(
+                  appointment.centerName,
+                  fallback: context.t('appointments.centerPending'),
+                ),
+              ),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.notes_outlined),
+              title: Text(context.t('appointments.notes')),
+              subtitle: Text(
+                _text(
+                  appointment.notes,
+                  fallback: context.t('appointments.noNotes'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 String _text(String? value, {required String fallback}) {

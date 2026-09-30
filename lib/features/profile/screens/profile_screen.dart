@@ -611,6 +611,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       _Divider(scheme: scheme),
                       _Row(
+                        icon: Icons.workspace_premium_outlined,
+                        label: context.t('recognition.title'),
+                        onTap: () =>
+                            Navigator.pushNamed(context, AppRoutes.recognition),
+                      ),
+                      _Divider(scheme: scheme),
+                      _Row(
                         icon: Icons.monitor_heart_outlined,
                         label: _copy('medicalSummary'),
                         onTap: () => _showMedicalSummary(user),

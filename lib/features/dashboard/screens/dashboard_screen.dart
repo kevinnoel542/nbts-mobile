@@ -183,11 +183,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     SectionHeader(
                       context.t('dashboard.forYou'),
                       action: TextButton(
-                        onPressed: () => _showForYouSheet(
-                          context,
-                          _campaignsFuture,
-                          _articlesFuture,
-                        ),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.discover),
                         child: Text(context.t('common.seeAll')),
                       ),
                     ),
@@ -932,71 +929,6 @@ class _ImpactCard extends StatelessWidget {
       ),
     );
   }
-}
-
-void _showForYouSheet(
-  BuildContext context,
-  Future<List<Campaign>> campaignsFuture,
-  Future<List<Article>> articlesFuture,
-) {
-  showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    builder: (context) => FutureBuilder<List<Object>>(
-      future: Future.wait([
-        campaignsFuture,
-        articlesFuture,
-      ]).then((lists) => [...lists[0], ...lists[1]]),
-      builder: (context, snapshot) {
-        final items = snapshot.data ?? const <Object>[];
-        return ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.sm,
-            AppSpacing.lg,
-            AppSpacing.xl,
-          ),
-          children: [
-            Text(
-              context.t('dashboard.forYou'),
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            if (items.isEmpty) Text(context.t('dashboard.noForYou')),
-            for (final item in items)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  item is Campaign
-                      ? Icons.campaign_outlined
-                      : Icons.article_outlined,
-                ),
-                title: Text(
-                  item is Campaign ? item.title : (item as Article).title,
-                ),
-                subtitle: Text(
-                  item is Campaign
-                      ? (item.summary ?? context.t('dashboard.campaignUpdate'))
-                      : ((item as Article).summary ??
-                            item.body ??
-                            context.t('dashboard.article')),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  if (item is Campaign) _showCampaignSheet(context, item);
-                  if (item is Article) _showArticleSheet(context, item);
-                },
-              ),
-          ],
-        );
-      },
-    ),
-  );
 }
 
 void _showCampaignSheet(BuildContext context, Campaign campaign) {

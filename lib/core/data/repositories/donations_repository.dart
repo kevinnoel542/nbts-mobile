@@ -8,7 +8,10 @@ class DonationsRepository {
   final ApiClient _api;
 
   Future<List<DonationRecord>> fetchAll() async {
-    final response = await _api.get('/donations');
+    final response = await _api.get(
+      '/donations',
+      queryParameters: const {'per_page': 50},
+    );
     return readListPayload(response).map(DonationRecord.fromJson).toList();
   }
 

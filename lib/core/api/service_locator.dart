@@ -13,6 +13,7 @@ import 'package:nbts/core/data/repositories/donor_card_repository.dart';
 import 'package:nbts/core/data/repositories/eligibility_repository.dart';
 import 'package:nbts/core/data/repositories/notifications_repository.dart';
 import 'package:nbts/core/data/repositories/profile_repository.dart';
+import 'package:nbts/core/data/repositories/loyalty_repository.dart';
 
 class Services {
   Services._();
@@ -44,6 +45,7 @@ class Services {
   late final NotificationsRepository notifications = NotificationsRepository(
     api: api,
   );
+  late final LoyaltyRepository loyalty = LoyaltyRepository(api: api);
   late final NotificationService notificationService = NotificationService(
     notifications: notifications,
   );

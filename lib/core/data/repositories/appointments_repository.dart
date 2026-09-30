@@ -8,7 +8,10 @@ class AppointmentsRepository {
   final ApiClient _api;
 
   Future<List<Appointment>> fetchAll() async {
-    final response = await _api.get('/appointments');
+    final response = await _api.get(
+      '/appointments',
+      queryParameters: const {'per_page': 50},
+    );
     return readListPayload(response).map(Appointment.fromJson).toList();
   }
 

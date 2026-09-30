@@ -261,6 +261,16 @@ class ApiClient {
       }
     }
 
+    if (response.statusCode == 429) {
+      final retryAfter = response.headers['retry-after'];
+      final language = LanguageController.code.value;
+      message = retryAfter == null || retryAfter.isEmpty
+          ? AppStrings.text('api.rateLimited', language)
+          : language == 'sw'
+          ? 'Majaribio ni mengi. Jaribu tena baada ya sekunde $retryAfter.'
+          : 'Too many attempts. Try again in $retryAfter seconds.';
+    }
+
     throw ApiException(
       message,
       statusCode: response.statusCode,

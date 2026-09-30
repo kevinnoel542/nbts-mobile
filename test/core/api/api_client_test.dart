@@ -35,4 +35,27 @@ void main() {
 
     expect(unauthorizedCalls, 0);
   });
+
+  test('429 response includes the retry delay', () async {
+    final client = ApiClient(
+      httpClient: MockClient(
+        (_) async => http.Response(
+          '{"message":"Too Many Attempts."}',
+          429,
+          headers: {'retry-after': '45'},
+        ),
+      ),
+    );
+
+    await expectLater(
+      client.post('/auth/login', authenticated: false),
+      throwsA(
+        isA<ApiException>().having(
+          (error) => error.safeMessage,
+          'message',
+          contains('45'),
+        ),
+      ),
+    );
+  });
 }

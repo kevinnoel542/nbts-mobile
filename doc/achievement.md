@@ -580,3 +580,14 @@ Laravel can keep the backend field if needed for admin/internal policy, but dono
 - Preview mode does not contact the backend until an API-dependent action such as submitting login or registration is used.
 - Normal builds continue using the existing splash, saved-session, Firebase, and Laravel flow.
 
+## 2026-09-30 Donor Experience Completion
+- Added a Laravel-backed Donor Recognition screen for points, tier, donation count, rank, badges, rewards, and the privacy-safe leaderboard.
+- Added a Discover screen with Campaigns, Articles, Publications, and Schedules tabs backed by Laravel public endpoints.
+- Dashboard See all now opens Discover, while Profile provides direct access to Donor Recognition.
+- Center cards now provide an explicit details action with address, opening hours, phone, all services, and booking.
+- Appointment cards now open complete appointment details including date, status, center, and notes.
+- Main list repositories request Laravel's maximum supported page size of 50 records.
+- HTTP 429 responses now show the server Retry-After delay in English or Swahili.
+- Added loyalty parsing and API rate-limit tests.
+- Local Laravel public storage, queue worker, and scheduler were enabled for device testing.
+

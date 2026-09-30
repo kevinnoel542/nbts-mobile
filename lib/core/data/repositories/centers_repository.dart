@@ -7,7 +7,10 @@ class CentersRepository {
   final ApiClient _api;
 
   Future<List<DonationCenter>> fetchAll() async {
-    final response = await _api.get('/blood-centers');
+    final response = await _api.get(
+      '/blood-centers',
+      queryParameters: const {'per_page': 50},
+    );
     return readListPayload(response).map(DonationCenter.fromJson).toList();
   }
 }

@@ -11,6 +11,8 @@ import 'package:nbts/features/donate/screens/find_centers_screen.dart';
 import 'package:nbts/features/history/screens/history_screen.dart';
 import 'package:nbts/features/notifications/screens/notifications_screen.dart';
 import 'package:nbts/features/profile/screens/profile_screen.dart';
+import 'package:nbts/features/recognition/screens/recognition_screen.dart';
+import 'package:nbts/features/discover/screens/discover_screen.dart';
 
 class AppRoutes {
   static const String initial = '/';
@@ -26,6 +28,8 @@ class AppRoutes {
   static const String history = '/history';
   static const String profile = '/profile';
   static const String notifications = '/notifications';
+  static const String recognition = '/recognition';
+  static const String discover = '/discover';
 
   static Map<String, WidgetBuilder> get routes => {
     welcome: (context) => const WelcomeScreen(),
@@ -40,5 +44,7 @@ class AppRoutes {
     history: (context) => const HistoryScreen(),
     profile: (context) => const ProfileScreen(),
     notifications: (context) => const NotificationsScreen(),
+    recognition: (context) => const RecognitionScreen(),
+    discover: (context) => const DiscoverScreen(),
   };
 }

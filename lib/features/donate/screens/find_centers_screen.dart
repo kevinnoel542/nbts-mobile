@@ -283,6 +283,14 @@ class _CenterTile extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
+                  onPressed: () => _showCenterDetails(context, center),
+                  icon: const Icon(Icons.info_outline_rounded, size: 18),
+                  label: Text(context.t('centers.details')),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: FilledButton.icon(
                   onPressed: isClosed ? null : () => _bookHere(context),
                   icon: const Icon(Icons.calendar_month_outlined, size: 18),
                   label: Text(context.t('centers.bookHere')),
@@ -294,6 +302,80 @@ class _CenterTile extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showCenterDetails(BuildContext context, DonationCenter center) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              center.name,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _Detail(
+              icon: Icons.place_outlined,
+              label: center.address ?? context.t('centers.addressPending'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _Detail(
+              icon: Icons.schedule_outlined,
+              label: center.hours ?? context.t('centers.hoursPending'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _Detail(
+              icon: Icons.phone_outlined,
+              label: center.phone ?? context.t('centers.phonePending'),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              context.t('centers.services'),
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              center.services.isEmpty
+                  ? context.t('centers.noServices')
+                  : center.services.join(' • '),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: center.isOpen == false
+                    ? null
+                    : () {
+                        Navigator.pop(sheetContext);
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.bookAppointment,
+                          arguments: center,
+                        );
+                      },
+                icon: const Icon(Icons.calendar_month_outlined),
+                label: Text(context.t('centers.bookHere')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _Detail extends StatelessWidget {
